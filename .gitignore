@@ -9,3 +9,4 @@ vite.config.js.timestamp-*
 vite.config.js
 vite.config.d.ts
 output/playwright
+.claude/launch.json
