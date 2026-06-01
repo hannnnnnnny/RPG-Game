@@ -23,3 +23,5 @@
 - Playwright 验证通过：角色创建、Phaser 画面渲染、HUD/侧栏显示、永久选择面板、图腾互动、装备掉落和金币日志均可运行。
 - 截图检查通过：`output/playwright/game-screen.png` 与 `output/playwright/totem-after-choice.png` 显示非空游戏画面；截图像素抽样非暗样本 1466。
 - 新增 `README.md`，记录本地运行方式、当前可玩内容、操作键位和验证命令。
+- 根据截图反馈修复出口重复互动问题：`escape_mine` 现在只会写入一次，之后再次互动只显示提示，不再刷日志。
+- 修复后验证：`npm.cmd run build` 通过，`npm.cmd audit --omit=optional` 为 0 漏洞。

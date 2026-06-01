@@ -308,6 +308,15 @@ export class MineIntroScene extends Phaser.Scene {
     }
 
     if (nearExit) {
+      if (store.worldState.flags.escapedMine) {
+        store.setDialogue({
+          speaker: "矿井出口",
+          text: "出口已经打开。下一版会从这里进入灰灯镇。",
+          tone: "memory"
+        });
+        return;
+      }
+
       const approved = store.requestStateChange({
         type: "escape_mine",
         requestedBy: "矿井出口",
@@ -344,4 +353,3 @@ export class MineIntroScene extends Phaser.Scene {
     }
   }
 }
-

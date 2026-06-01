@@ -25,6 +25,13 @@ export function approveStateChange(
     };
   }
 
+  if (request.type === "escape_mine" && worldState.flags.escapedMine) {
+    return {
+      approved: false,
+      reason: "矿井出口已经打开。灰灯镇的路在前方。"
+    };
+  }
+
   if (request.type === "record_first_choice" && worldState.flags.firstDwarfChoice) {
     return {
       approved: false,
@@ -37,4 +44,3 @@ export function approveStateChange(
     reason: "状态变更符合当前剧情和权限。"
   };
 }
-

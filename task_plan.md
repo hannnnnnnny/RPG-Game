@@ -49,3 +49,4 @@
 | 2026-06-01 | Vite 8 类型解析要求更现代的 moduleResolution | 将 TypeScript 配置改为 `moduleResolution: Bundler` |
 | 2026-06-01 | TypeScript project reference 不允许被引用项目 `noEmit` | 改为构建脚本显式执行两个 `tsc --noEmit` 类型检查 |
 | 2026-06-01 | Playwright 用中文按钮名定位失败 | 改用稳定 CSS 选择器 `.primary-action` 继续验证 |
+| 2026-06-01 | 矿井出口重复按 E 会反复写入 `escape_mine` 日志 | 在 AIDLC 审批规则和出口交互处增加一次性保护 |
