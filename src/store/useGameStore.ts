@@ -12,6 +12,11 @@ import type {
   WorldState
 } from "../core/types";
 
+type VisionOverlay = {
+  image: string;
+  caption?: string;
+};
+
 type GameStore = {
   profile: PlayerProfile | null;
   worldState: WorldState;
@@ -20,11 +25,13 @@ type GameStore = {
   equipped: Partial<Record<string, string>>;
   dialogue: DialogueState | null;
   activeChoice: ActiveChoice | null;
+  vision: VisionOverlay | null;
   log: string[];
   createProfile: (profile: PlayerProfile) => void;
   setCombat: (combat: CombatSnapshot) => void;
   setDialogue: (dialogue: DialogueState | null) => void;
   setActiveChoice: (choice: ActiveChoice | null) => void;
+  setVision: (vision: VisionOverlay | null) => void;
   addItem: (item: ItemInstance) => void;
   addGold: (amount: number) => void;
   equipItem: (itemId: string) => void;
@@ -80,6 +87,7 @@ export const useGameStore = create<GameStore>()(
       equipped: {},
       dialogue: null,
       activeChoice: null,
+      vision: null,
       log: ["存档初始化。"],
       createProfile: (profile) =>
         set((state) => ({
@@ -102,6 +110,7 @@ export const useGameStore = create<GameStore>()(
       setCombat: (combat) => set({ combat }),
       setDialogue: (dialogue) => set({ dialogue }),
       setActiveChoice: (choice) => set({ activeChoice: choice }),
+      setVision: (vision) => set({ vision }),
       addItem: (item) =>
         set((state) => ({
           inventory: [item, ...state.inventory],
@@ -161,6 +170,7 @@ export const useGameStore = create<GameStore>()(
           equipped: {},
           dialogue: null,
           activeChoice: null,
+          vision: null,
           log: ["已重置本地测试存档。"]
         })
     }),
