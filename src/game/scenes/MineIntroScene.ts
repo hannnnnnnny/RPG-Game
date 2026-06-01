@@ -152,7 +152,7 @@ export class MineIntroScene extends Phaser.Scene {
 
   private createObjectiveText() {
     this.objectiveText = this.add
-      .text(24, 500, "目标：逃出矿井。E 互动，J 攻击，Space 翻滚。", {
+      .text(24, 500, "目标：沿矿灯残影逃出矿井。", {
         color: "#d9cfb7",
         fontSize: "14px",
         backgroundColor: "#111417cc",

@@ -37,13 +37,14 @@ function CharacterCreator() {
       <section className="creation-panel" aria-labelledby="creation-title">
         <div className="brand-mark">潮蚀之环</div>
         <h1 id="creation-title">黑潮矿区醒来的人</h1>
-        <p>名字会写入存档、对话和世界状态。克哈会记住它。</p>
+        <p>矿井深处只剩一个名字还没有被黑潮吞掉。</p>
 
         <label>
           名字
           <input value={name} onChange={(event) => setName(event.target.value)} maxLength={18} />
         </label>
 
+        <div className="field-label">性别</div>
         <div className="segmented" aria-label="性别">
           {[
             ["unknown", "未知"],
@@ -61,6 +62,7 @@ function CharacterCreator() {
           ))}
         </div>
 
+        <div className="field-label">外貌</div>
         <div className="appearance-grid" aria-label="外貌">
           {[
             ["ashen", "灰烬旅人"],
@@ -87,7 +89,7 @@ function CharacterCreator() {
           type="button"
         >
           <Sparkles size={18} />
-          醒来
+          进入矿井
         </button>
       </section>
     </main>
@@ -274,7 +276,7 @@ function CharacterPanel() {
       </dl>
       <button className="quiet-button" onClick={resetRun} type="button">
         <RotateCcw size={15} />
-        重置测试存档
+        重置旅程
       </button>
     </section>
   );
@@ -292,7 +294,7 @@ function InventoryPanel() {
         <h2>背包</h2>
       </div>
       {inventory.length === 0 ? (
-        <p className="muted">击杀感染者或触碰图腾后会出现第一批随机词条装备。</p>
+        <p className="muted">矿袋空着，只剩黑潮和铁锈的气味。</p>
       ) : (
         <div className="item-list">
           {inventory.slice(0, 8).map((item) => (
@@ -325,7 +327,7 @@ function QuestPanel() {
     if (!world.flags.firstDwarfChoice) list.push("处理受伤矮人的命运");
     if (!world.flags.touchedTotemFragment) list.push("触碰图腾残片");
     if (world.flags.touchedTotemFragment && !world.flags.escapedMine) list.push("前往矿井出口");
-    if (world.flags.escapedMine) list.push("等待灰灯镇地图实装");
+    if (world.flags.escapedMine) list.push("灰灯镇的路还在雾里");
     return list;
   }, [world.flags]);
 
