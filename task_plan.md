@@ -12,9 +12,9 @@
 | 2 | complete | 创建 GAME_DESIGN.md |
 | 3 | complete | 创建 TECH_ARCHITECTURE.md |
 | 4 | complete | 建立项目规划与进度记录 |
-| 5 | pending | 搭建 Vite + React + TypeScript + Phaser 项目骨架 |
-| 6 | pending | 实现黑潮矿区开局垂直切片 |
-| 7 | pending | 实现基础战斗、掉落、存档和 AIDLC 雏形 |
+| 5 | complete | 搭建 Vite + React + TypeScript + Phaser 项目骨架 |
+| 6 | complete | 实现黑潮矿区开局垂直切片 |
+| 7 | complete | 实现基础战斗、掉落、存档和 AIDLC 雏形 |
 
 ## 第一版范围
 
@@ -45,4 +45,7 @@
 
 | 日期 | 问题 | 处理 |
 |---|---|---|
-| 2026-06-01 | 暂无 | 暂无 |
+| 2026-06-01 | PowerShell 阻止执行 `npm.ps1` | 改用 `npm.cmd` 运行 npm 命令 |
+| 2026-06-01 | Vite 8 类型解析要求更现代的 moduleResolution | 将 TypeScript 配置改为 `moduleResolution: Bundler` |
+| 2026-06-01 | TypeScript project reference 不允许被引用项目 `noEmit` | 改为构建脚本显式执行两个 `tsc --noEmit` 类型检查 |
+| 2026-06-01 | Playwright 用中文按钮名定位失败 | 改用稳定 CSS 选择器 `.primary-action` 继续验证 |
