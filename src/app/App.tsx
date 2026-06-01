@@ -104,8 +104,10 @@ function GameShell() {
           <PhaserGame />
         </Suspense>
         <GameHud />
+        <DisiAvatar />
         <DialoguePanel />
         <ChoicePanel />
+        <VisionOverlay />
       </section>
       <aside className="side-panel" aria-label="角色与任务">
         <CharacterPanel />
@@ -114,6 +116,44 @@ function GameShell() {
         <LogPanel />
       </aside>
     </main>
+  );
+}
+
+function DisiAvatar() {
+  const corruption = useGameStore((state) => state.worldState.corruption);
+  const profile = useGameStore((state) => state.profile);
+  const stage = corruption <= 25 ? 1 : corruption <= 55 ? 2 : 3;
+  const labels = ["神志清明", "渗透中", "意志崩碎"];
+  return (
+    <div className={`disi-avatar stage-${stage}`} aria-label="迪西状态">
+      <img src={`assets/characters/disi_stage${stage}.jpg`} alt={`迪西第${stage}阶段`} />
+      <div className="disi-avatar-meta">
+        <strong>{profile?.name ?? "迪西"}</strong>
+        <span>污染 {corruption} · {labels[stage - 1]}</span>
+      </div>
+    </div>
+  );
+}
+
+function VisionOverlay() {
+  const vision = useGameStore((state) => state.vision);
+  const setVision = useGameStore((state) => state.setVision);
+  if (!vision) return null;
+  return (
+    <div
+      className="vision-overlay"
+      role="dialog"
+      aria-modal="true"
+      onClick={() => setVision(null)}
+    >
+      <div className="vision-frame" onClick={(event) => event.stopPropagation()}>
+        <img src={vision.image} alt="幻象" />
+        {vision.caption && <p>{vision.caption}</p>}
+        <button type="button" onClick={() => setVision(null)}>
+          闭上眼
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -177,8 +217,13 @@ function DialoguePanel() {
   const setDialogue = useGameStore((state) => state.setDialogue);
   if (!dialogue) return null;
 
+  const isKhah = dialogue.speaker === "克哈低语";
+
   return (
     <section className={`dialogue-panel ${dialogue.tone ?? ""}`} aria-live="polite">
+      {isKhah && (
+        <img className="dialogue-portrait" src="assets/characters/khah.jpg" alt="克哈" />
+      )}
       <div>
         <strong>{dialogue.speaker}</strong>
         <p>{dialogue.text}</p>
