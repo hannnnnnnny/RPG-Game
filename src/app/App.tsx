@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   Backpack,
   Coins,
@@ -15,6 +15,107 @@ import { useGameStore } from "../store/useGameStore";
 import type { Gender, PlayerProfile } from "../core/types";
 
 const PhaserGame = lazy(() => import("../game/PhaserGame").then((module) => ({ default: module.PhaserGame })));
+
+/**
+ * Modal accessibility hook: focus trap + ESC close + focus restoration.
+ *
+ * - When `open` flips true: saves the currently focused element, moves focus
+ *   into the modal (first focusable, or `initialFocus` when supplied), and
+ *   intercepts Tab to keep focus inside the container.
+ * - When ESC fires and `onEscape` is non-null: calls it. Pass `null` to disable
+ *   ESC dismissal for unrecoverable prompts (e.g. permanent choices).
+ * - On close (open → false or unmount): restores focus to the previously
+ *   focused element.
+ *
+ * Required by PRODUCT.md a11y "键盘全控" and WCAG 2.1.2 / 2.4.3.
+ */
+function useModalA11y<T extends HTMLElement>(
+  open: boolean,
+  onEscape: (() => void) | null,
+  initialFocus?: React.RefObject<HTMLElement | null>
+) {
+  const containerRef = useRef<T | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  // Keep the latest onEscape in a ref so callers don't need useCallback;
+  // the effect itself depends only on `open` and won't re-run on every render.
+  const escapeRef = useRef(onEscape);
+  escapeRef.current = onEscape;
+  const initialFocusRef = useRef(initialFocus);
+  initialFocusRef.current = initialFocus;
+
+  useEffect(() => {
+    if (!open) return;
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
+
+    const getFocusables = () => {
+      const node = containerRef.current;
+      if (!node) return [] as HTMLElement[];
+      return Array.from(
+        node.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      );
+    };
+
+    const moveInitialFocus = () => {
+      const explicit = initialFocusRef.current?.current;
+      if (explicit && containerRef.current?.contains(explicit)) {
+        explicit.focus();
+        return;
+      }
+      const [first] = getFocusables();
+      first?.focus();
+    };
+
+    const raf = requestAnimationFrame(moveInitialFocus);
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        const handler = escapeRef.current;
+        if (handler) {
+          event.preventDefault();
+          event.stopPropagation();
+          handler();
+        }
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusables = getFocusables();
+      if (focusables.length === 0) {
+        event.preventDefault();
+        return;
+      }
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      const inside = active ? containerRef.current?.contains(active) ?? false : false;
+      if (event.shiftKey) {
+        if (!inside || active === first) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (!inside || active === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      cancelAnimationFrame(raf);
+      document.removeEventListener("keydown", onKeyDown);
+      const previous = previousFocusRef.current;
+      previousFocusRef.current = null;
+      if (previous && document.body.contains(previous)) {
+        previous.focus();
+      }
+    };
+  }, [open]);
+
+  return containerRef;
+}
 
 export function App() {
   const profile = useGameStore((state) => state.profile);
@@ -68,7 +169,8 @@ function CharacterCreator() {
             ["ashen", "灰烬旅人"],
             ["wanderer", "破斗篷"],
             ["miner", "矿区幸存者"],
-            ["noble", "失落贵族"]
+            ["noble", "失落贵族"],
+            ["dwarf", "矿镇血脉"]
           ].map(([value, label]) => (
             <button
               className={appearance === value ? "selected" : ""}
@@ -76,7 +178,18 @@ function CharacterCreator() {
               onClick={() => setAppearance(value as PlayerProfile["appearance"])}
               type="button"
             >
-              <span className={`portrait ${value}`} />
+              <img
+                className={`portrait portrait-${value}`}
+                src={`assets/portraits/${value}.png`}
+                alt={label}
+                width={48}
+                height={48}
+                onError={(event) => {
+                  // Graceful fallback while artist delivers the PNG set:
+                  // hide the broken icon so the button just shows the label.
+                  event.currentTarget.style.visibility = "hidden";
+                }}
+              />
               {label}
             </button>
           ))}
@@ -138,18 +251,25 @@ function DisiAvatar() {
 function VisionOverlay() {
   const vision = useGameStore((state) => state.vision);
   const setVision = useGameStore((state) => state.setVision);
+  const captionId = useId();
+  const close = () => setVision(null);
+  // Vision is recoverable: ESC dismisses.
+  const containerRef = useModalA11y<HTMLDivElement>(!!vision, close);
   if (!vision) return null;
   return (
     <div
+      ref={containerRef}
       className="vision-overlay"
       role="dialog"
       aria-modal="true"
-      onClick={() => setVision(null)}
+      aria-label={vision.caption ? undefined : "幻象"}
+      aria-describedby={vision.caption ? captionId : undefined}
+      onClick={close}
     >
       <div className="vision-frame" onClick={(event) => event.stopPropagation()}>
         <img src={vision.image} alt="幻象" />
-        {vision.caption && <p>{vision.caption}</p>}
-        <button type="button" onClick={() => setVision(null)}>
+        {vision.caption && <p id={captionId}>{vision.caption}</p>}
+        <button type="button" onClick={close}>
           闭上眼
         </button>
       </div>
@@ -215,20 +335,31 @@ function Meter({
 function DialoguePanel() {
   const dialogue = useGameStore((state) => state.dialogue);
   const setDialogue = useGameStore((state) => state.setDialogue);
+  const speakerId = useId();
+  const close = () => setDialogue(null);
+  // Dialogue is recoverable: ESC dismisses.
+  const containerRef = useModalA11y<HTMLElement>(!!dialogue, close);
   if (!dialogue) return null;
 
   const isKhah = dialogue.speaker === "克哈低语";
 
   return (
-    <section className={`dialogue-panel ${dialogue.tone ?? ""}`} aria-live="polite">
+    <section
+      ref={containerRef}
+      className={`dialogue-panel ${dialogue.tone ?? ""}`}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={speakerId}
+      aria-live="polite"
+    >
       {isKhah && (
         <img className="dialogue-portrait" src="assets/characters/khah.jpg" alt="克哈" />
       )}
       <div>
-        <strong>{dialogue.speaker}</strong>
+        <strong id={speakerId}>{dialogue.speaker}</strong>
         <p>{dialogue.text}</p>
       </div>
-      <button aria-label="关闭对话" onClick={() => setDialogue(null)} type="button">
+      <button aria-label="关闭对话" onClick={close} type="button">
         ×
       </button>
     </section>
@@ -241,6 +372,11 @@ function ChoicePanel() {
   const requestStateChange = useGameStore((state) => state.requestStateChange);
   const setDialogue = useGameStore((state) => state.setDialogue);
   const addGold = useGameStore((state) => state.addGold);
+  const titleId = useId();
+  const bodyId = useId();
+  // Permanent choice is by design unrecoverable: focus trap on, ESC OFF.
+  // PRODUCT.md Design Principle 4: 选择不可逆 — interface must not offer dismissal.
+  const containerRef = useModalA11y<HTMLElement>(!!activeChoice, null);
 
   if (!activeChoice) return null;
 
@@ -275,9 +411,16 @@ function ChoicePanel() {
   };
 
   return (
-    <section className="choice-panel" aria-label="永久选择">
-      <h2>{activeChoice.title}</h2>
-      <p>{activeChoice.body}</p>
+    <section
+      ref={containerRef}
+      className="choice-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      aria-describedby={bodyId}
+    >
+      <h2 id={titleId}>{activeChoice.title}</h2>
+      <p id={bodyId}>{activeChoice.body}</p>
       <div className="choice-list">
         {activeChoice.options.map((option) => (
           <button key={option.id} onClick={() => choose(option.id)} type="button">
