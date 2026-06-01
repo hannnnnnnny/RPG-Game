@@ -1,22 +1,70 @@
 :root {
+  /* Surface ramp (Mine-Black family) */
   --bg: #080a0b;
   --bg-soft: #0d1011;
   --surface: rgba(16, 19, 20, 0.88);
   --surface-strong: rgba(22, 25, 25, 0.96);
   --surface-muted: rgba(26, 30, 30, 0.82);
+
+  /* Lines (gold-tinted, never pure gray) */
   --line: rgba(206, 181, 116, 0.18);
   --line-strong: rgba(225, 197, 125, 0.36);
-  --text: #f2ead8;
-  --muted: #b3aa98;
-  --dim: #7f786b;
+
+  /* Text ramp */
+  --text: #f2ead8;        /* Lantern Cream — body, ~16:1 on bg */
+  --muted: #b3aa98;       /* Tunnel Mist — secondary, ~7.5:1 on bg */
+  --dim: #7f786b;         /* Soot Gray — decorative ceiling only, ~4.5:1 borderline */
+
+  /* Brand colors (committed identity) */
   --gold: #d9b662;
   --gold-deep: #8c6530;
   --blood: #b95b61;
   --moss: #88a96d;
   --blue: #7bb0c9;
   --violet: #8b5a9b;
+
+  /* RGB channel tokens for transparency variants:
+     usage: rgb(var(--gold-rgb) / 0.18) */
+  --gold-rgb: 217 182 98;
+  --gold-deep-rgb: 140 101 48;
+  --blood-rgb: 185 91 97;
+  --moss-rgb: 136 169 109;
+  --blue-rgb: 123 176 201;
+  --violet-rgb: 139 90 155;
+  --text-rgb: 242 234 216;
+  --bg-rgb: 8 10 11;
+
+  /* Shadow */
   --shadow: rgba(0, 0, 0, 0.46);
+
+  /* Radius scale */
+  --radius-xs: 6px;
+  --radius-sm: 7px;
   --radius: 8px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-pill: 999px;
+
+  /* Spacing scale (consumed incrementally; ad-hoc values still allowed during migration) */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 18px;
+  --space-xl: 24px;
+  --space-xxl: 32px;
+
+  /* Semantic z-index scale (was arbitrary 0/1/4/6/7/8/12) */
+  --z-base: 0;
+  --z-canvas: 1;
+  --z-canvas-vignette: 4;
+  --z-hud: 6;
+  --z-disi: 7;
+  --z-dialogue: 8;
+  --z-vision: 12;
+  --z-toast: 20;
+  --z-tooltip: 30;
+
   color: var(--text);
   background: var(--bg);
   font-family:
@@ -45,22 +93,14 @@ body {
   overflow: hidden;
 }
 
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.5;
-  background:
-    repeating-linear-gradient(0deg, rgba(220, 202, 150, 0.025) 0, rgba(220, 202, 150, 0.025) 1px, transparent 1px, transparent 4px),
-    linear-gradient(135deg, rgba(114, 48, 73, 0.08), transparent 42%, rgba(69, 102, 96, 0.08));
-  mix-blend-mode: screen;
-}
+/* Quieter + optimize: removed full-screen ::before that overlaid a 4px scanline
+   plus a tinted bleed via `mix-blend-mode: screen`. The body's own scanline
+   already supplies substrate texture, and the bleed was a constant repaint
+   cost for marginal visual gain. */
 
 #root {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-canvas);
   min-height: 100dvh;
 }
 
@@ -89,7 +129,7 @@ button:active {
 
 button:focus-visible,
 input:focus-visible {
-  outline: 2px solid rgba(217, 182, 98, 0.72);
+  outline: 2px solid rgb(var(--gold-rgb) / 0.72);
   outline-offset: 2px;
 }
 
@@ -108,6 +148,7 @@ input:focus-visible {
   background:
     linear-gradient(180deg, rgba(21, 24, 24, 0.94), rgba(10, 12, 13, 0.94)),
     repeating-linear-gradient(135deg, rgba(217, 182, 98, 0.035) 0, rgba(217, 182, 98, 0.035) 1px, transparent 1px, transparent 14px);
+  /* Panels (cards) keep dramatic shadow for ritual weight; impeccable card exception. */
   box-shadow:
     0 32px 90px var(--shadow),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
@@ -156,10 +197,10 @@ input:focus-visible {
 
 .creation-panel input {
   width: 100%;
-  border: 1px solid rgba(220, 202, 150, 0.3);
+  border: 1px solid rgb(var(--gold-rgb) / 0.3);
   background: rgba(7, 9, 10, 0.94);
   color: var(--text);
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   padding: 13px 14px;
   outline: none;
   box-shadow: inset 0 1px 10px rgba(0, 0, 0, 0.25);
@@ -168,7 +209,7 @@ input:focus-visible {
 .creation-panel input:focus {
   border-color: var(--gold);
   box-shadow:
-    0 0 0 3px rgba(217, 182, 98, 0.11),
+    0 0 0 3px rgb(var(--gold-rgb) / 0.11),
     inset 0 1px 10px rgba(0, 0, 0, 0.25);
 }
 
@@ -196,7 +237,7 @@ input:focus-visible {
   border: 1px solid rgba(225, 211, 168, 0.18);
   background: rgba(18, 22, 23, 0.92);
   color: var(--text);
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
 }
 
 .segmented button,
@@ -219,75 +260,24 @@ input:focus-visible {
 }
 
 .selected {
-  border-color: rgba(217, 182, 98, 0.86) !important;
+  border-color: rgb(var(--gold-rgb) / 0.86) !important;
   background:
     linear-gradient(180deg, rgba(83, 64, 34, 0.98), rgba(42, 35, 25, 0.98)) !important;
   box-shadow: inset 0 0 0 1px rgba(255, 232, 171, 0.08);
 }
 
+/* Portrait tile (48×48). Source PNGs are pixel-art at 32x32 or 48x48 and
+   render with pixelated scaling. While art is in production, missing files
+   are hidden via the React onError handler so the button still reads. */
 .portrait {
   width: 48px;
   height: 48px;
-  position: relative;
-  border-radius: 7px;
-  border: 1px solid rgba(239, 232, 215, 0.24);
   display: block;
-  box-shadow: inset 0 -12px 20px rgba(0, 0, 0, 0.24);
-  overflow: hidden;
-}
-
-.portrait.ashen {
-  background: linear-gradient(135deg, #cbc1af, #404852);
-}
-
-.portrait.wanderer {
-  background: linear-gradient(135deg, #5a3b3c, #121417);
-}
-
-.portrait.miner {
-  background: linear-gradient(135deg, #8a6d3c, #2c2420);
-}
-
-.portrait.noble {
-  background: linear-gradient(135deg, #d9c990, #44375c);
-}
-
-.portrait::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 9px;
-  width: 22px;
-  height: 26px;
-  transform: translateX(-50%);
-  border-radius: 50% 50% 45% 45%;
-  background: linear-gradient(180deg, #e0d0bd, #b79d86);
-  box-shadow: 0 14px 0 rgba(22, 25, 25, 0.86);
-}
-
-.portrait::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 20px;
-  width: 14px;
-  height: 4px;
-  transform: translateX(-50%);
-  background:
-    radial-gradient(circle at 2px 2px, #121416 0 2px, transparent 2px),
-    radial-gradient(circle at 12px 2px, #121416 0 2px, transparent 2px);
-}
-
-.portrait.wanderer::before {
-  background: linear-gradient(180deg, #c8a59c, #8b6b63);
-}
-
-.portrait.miner::before {
-  background: linear-gradient(180deg, #d0a978, #8b6844);
-}
-
-.portrait.noble::before {
-  background: linear-gradient(180deg, #e6d7bd, #b6a18a);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(239, 232, 215, 0.24);
+  background: var(--bg);
+  image-rendering: pixelated;
+  object-fit: cover;
 }
 
 .primary-action {
@@ -298,16 +288,21 @@ input:focus-visible {
   justify-content: center;
   align-items: center;
   gap: 8px;
-  border-color: rgba(236, 197, 103, 0.54);
+  /* Ghost-card fix: tighter, weightier shadow rather than 1px border + 34px blur soft drop. */
+  border-color: rgb(var(--gold-rgb) / 0.72);
   background: linear-gradient(180deg, #d2aa51, #9c6e2f);
   color: #141008;
   font-weight: 800;
-  box-shadow: 0 14px 34px rgba(122, 83, 29, 0.28);
+  box-shadow:
+    0 8px 18px rgba(122, 83, 29, 0.42),
+    inset 0 1px 0 rgba(255, 232, 171, 0.18);
 }
 
 .primary-action:hover {
   background: linear-gradient(180deg, #e3bd62, #a87934);
-  box-shadow: 0 18px 40px rgba(122, 83, 29, 0.34);
+  box-shadow:
+    0 10px 22px rgba(122, 83, 29, 0.5),
+    inset 0 1px 0 rgba(255, 232, 171, 0.22);
 }
 
 .primary-action:disabled {
@@ -340,7 +335,7 @@ input:focus-visible {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 4;
+  z-index: var(--z-canvas-vignette);
   background:
     linear-gradient(90deg, rgba(0, 0, 0, 0.28), transparent 16%, transparent 72%, rgba(0, 0, 0, 0.18)),
     linear-gradient(180deg, rgba(0, 0, 0, 0.1), transparent 35%, rgba(0, 0, 0, 0.2));
@@ -374,15 +369,15 @@ input:focus-visible {
   align-content: start;
   gap: 12px;
   padding-right: 2px;
-  scrollbar-color: rgba(217, 182, 98, 0.35) transparent;
+  scrollbar-color: rgb(var(--gold-rgb) / 0.35) transparent;
 }
 
 .panel-section {
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background:
-    linear-gradient(180deg, rgba(17, 20, 21, 0.94), rgba(10, 12, 13, 0.94)),
-    repeating-linear-gradient(135deg, rgba(217, 182, 98, 0.025) 0, rgba(217, 182, 98, 0.025) 1px, transparent 1px, transparent 18px);
+  /* Quieter: dropped the 0.025-opacity gold stripe weave. Gold-line border +
+     dark gradient + Resting shadow already carry the metallic weight. */
+  background: linear-gradient(180deg, rgba(17, 20, 21, 0.94), rgba(10, 12, 13, 0.94));
   padding: 14px;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.035),
@@ -411,14 +406,16 @@ input:focus-visible {
 }
 
 .stat-grid div {
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   background: rgba(27, 31, 32, 0.86);
   padding: 9px;
   border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .stat-grid dt {
-  color: var(--dim);
+  /* P1 a11y fix: was var(--dim) #7f786b, computed ~3.92:1 on composited bg #181c1d, failed AA.
+     Tunnel Mist (#b3aa98) is the same temperature, ~7.5:1, safe. */
+  color: var(--muted);
   font-size: 12px;
 }
 
@@ -441,7 +438,7 @@ input:focus-visible {
 
 .hud {
   position: absolute;
-  z-index: 6;
+  z-index: var(--z-hud);
   top: 14px;
   left: 14px;
   display: flex;
@@ -454,13 +451,15 @@ input:focus-visible {
 .hud-pill {
   min-height: 36px;
   border: 1px solid rgba(231, 214, 165, 0.18);
-  border-radius: 7px;
-  background: rgba(8, 10, 11, 0.76);
+  border-radius: var(--radius-sm);
+  /* Optimize: dropped backdrop-blur(12px) on persistent HUD elements (6+ tiles
+     on screen at once was a real per-frame composite cost on lower-end GPUs).
+     Bumped bg opacity from 0.76 to 0.92 to keep readability without the blur. */
+  background: rgba(8, 10, 11, 0.92);
   color: var(--text);
-  backdrop-filter: blur(12px);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 10px 30px rgba(0, 0, 0, 0.18);
+    0 6px 14px rgba(0, 0, 0, 0.28);
 }
 
 .meter {
@@ -477,20 +476,20 @@ input:focus-visible {
 
 .meter span {
   font-size: 12px;
-  color: #d4c8ad;
+  color: rgb(var(--text-rgb) / 0.83);
 }
 
 .meter b {
   display: block;
   margin-top: 2px;
   font-size: 11px;
-  color: #b4aa98;
+  color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 
 .meter-track {
   height: 5px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: rgba(51, 55, 56, 0.86);
   overflow: hidden;
   margin-top: 5px;
@@ -522,7 +521,7 @@ input:focus-visible {
 
 .disi-avatar {
   position: absolute;
-  z-index: 7;
+  z-index: var(--z-disi);
   top: 14px;
   right: 14px;
   display: flex;
@@ -530,21 +529,24 @@ input:focus-visible {
   gap: 10px;
   padding: 6px 10px 6px 6px;
   border: 1px solid rgba(231, 214, 165, 0.22);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: rgba(8, 10, 11, 0.78);
   backdrop-filter: blur(12px);
+  /* Ghost-card fix: tighter shadow (was 30px blur, now 14px). Keeps weight without soft halo. */
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 10px 30px rgba(0, 0, 0, 0.32);
+    0 6px 14px rgba(0, 0, 0, 0.46);
   transition: border-color 240ms ease, box-shadow 240ms ease;
 }
 
-.disi-avatar img {
-  width: 52px;
-  height: 52px;
-  border-radius: 8px;
-  object-fit: cover;
-  border: 1px solid rgba(217, 182, 98, 0.36);
+.disi-avatar img,
+.disi-avatar canvas {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-xs);
+  display: block;
+  border: 1px solid rgb(var(--gold-rgb) / 0.36);
+  image-rendering: pixelated;
 }
 
 .disi-avatar-meta {
@@ -560,25 +562,48 @@ input:focus-visible {
 }
 
 .disi-avatar.stage-2 {
-  border-color: rgba(155, 86, 166, 0.55);
-  box-shadow: 0 10px 32px rgba(95, 36, 119, 0.32);
+  border-color: rgb(var(--violet-rgb) / 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 6px 16px rgba(95, 36, 119, 0.42);
 }
 
 .disi-avatar.stage-3 {
-  border-color: rgba(192, 64, 86, 0.7);
-  box-shadow: 0 12px 36px rgba(140, 32, 56, 0.42);
+  border-color: rgb(var(--blood-rgb) / 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 8px 20px rgba(140, 32, 56, 0.5);
+}
+
+/* Optimize: pulse moved off `box-shadow` (paint-bound) onto an `::after`
+   glow layer whose `opacity` is the only animated property. opacity gets a
+   compositor-only layer in every modern browser, so the pulse no longer
+   forces per-frame repaint of the avatar tile. */
+.disi-avatar::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0;
+  box-shadow: 0 0 28px 6px rgba(196, 70, 92, 0.7);
+  transition: opacity 240ms ease;
+  will-change: opacity;
+}
+
+.disi-avatar.stage-3::after {
   animation: disi-pulse 1.6s ease-in-out infinite;
 }
 
 @keyframes disi-pulse {
-  0%, 100% { box-shadow: 0 12px 36px rgba(140, 32, 56, 0.32); }
-  50% { box-shadow: 0 12px 44px rgba(196, 70, 92, 0.62); }
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.9; }
 }
 
 .vision-overlay {
   position: absolute;
   inset: 0;
-  z-index: 12;
+  z-index: var(--z-vision);
   display: grid;
   place-items: center;
   background: rgba(3, 4, 6, 0.78);
@@ -593,18 +618,21 @@ input:focus-visible {
   padding: 14px;
   display: grid;
   gap: 12px;
-  border: 1px solid rgba(217, 182, 98, 0.36);
-  border-radius: 12px;
+  border: 1px solid rgb(var(--gold-rgb) / 0.36);
+  border-radius: var(--radius-xl);
   background: linear-gradient(180deg, rgba(15, 12, 22, 0.96), rgba(6, 5, 10, 0.96));
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
 }
 
-.vision-frame img {
-  width: 100%;
+.vision-frame img,
+.vision-frame canvas {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
   max-height: 60vh;
-  object-fit: contain;
-  border-radius: 8px;
-  border: 1px solid rgba(155, 86, 166, 0.42);
+  border-radius: var(--radius);
+  border: 1px solid rgb(var(--violet-rgb) / 0.42);
+  image-rendering: pixelated;
 }
 
 .vision-frame p {
@@ -617,34 +645,35 @@ input:focus-visible {
 .vision-frame button {
   justify-self: end;
   padding: 8px 18px;
-  border: 1px solid rgba(217, 182, 98, 0.6);
-  border-radius: 6px;
+  border: 1px solid rgb(var(--gold-rgb) / 0.6);
+  border-radius: var(--radius-xs);
   background: linear-gradient(180deg, #5c4220, #2a1d0d);
   color: var(--gold);
   font-weight: 700;
 }
 
 .dialogue-portrait {
-  width: 64px;
-  height: 64px;
-  border-radius: 8px;
-  object-fit: cover;
-  border: 1px solid rgba(155, 86, 166, 0.5);
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-xs);
+  display: block;
+  border: 1px solid rgb(var(--violet-rgb) / 0.5);
   flex: 0 0 auto;
   box-shadow: 0 6px 18px rgba(95, 36, 119, 0.42);
+  image-rendering: pixelated;
 }
 
 .dialogue-panel,
 .choice-panel {
   position: absolute;
-  z-index: 8;
+  z-index: var(--z-dialogue);
   left: 18px;
   right: 18px;
-  border: 1px solid rgba(217, 182, 98, 0.24);
+  border: 1px solid rgb(var(--gold-rgb) / 0.24);
   border-radius: var(--radius);
-  background:
-    linear-gradient(180deg, rgba(12, 14, 15, 0.92), rgba(6, 8, 9, 0.94)),
-    repeating-linear-gradient(90deg, rgba(217, 182, 98, 0.025) 0, rgba(217, 182, 98, 0.025) 1px, transparent 1px, transparent 12px);
+  /* Quieter: dropped the vertical 0.025-opacity gold stripe. Imposing shadow
+     + backdrop-blur + gold-tinted border carry the modal weight. */
+  background: linear-gradient(180deg, rgba(12, 14, 15, 0.92), rgba(6, 8, 9, 0.94));
   box-shadow:
     0 22px 70px rgba(0, 0, 0, 0.42),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -666,11 +695,11 @@ input:focus-visible {
 }
 
 .dialogue-panel.whisper {
-  border-color: rgba(144, 80, 163, 0.46);
+  border-color: rgb(var(--violet-rgb) / 0.46);
 }
 
 .dialogue-panel.warning {
-  border-color: rgba(185, 72, 58, 0.48);
+  border-color: rgb(var(--blood-rgb) / 0.48);
 }
 
 .dialogue-panel strong {
@@ -686,6 +715,8 @@ input:focus-visible {
 }
 
 .dialogue-panel button {
+  /* P2 adapt: hit-target ≥44px via padding-extended pseudo-element while keeping visual disk 32px. */
+  position: relative;
   width: 32px;
   height: 32px;
   border: 1px solid rgba(255, 255, 255, 0.16);
@@ -693,6 +724,14 @@ input:focus-visible {
   background: rgba(24, 28, 29, 0.92);
   color: #e8dcc2;
   flex: 0 0 auto;
+}
+
+.dialogue-panel button::before {
+  /* Invisible 44×44 hit area, centered on the button. iOS/Material touch minimum. */
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
 }
 
 .choice-panel {
@@ -707,11 +746,13 @@ input:focus-visible {
   margin: 0 0 8px;
   font-family: Georgia, "Times New Roman", serif;
   font-size: 28px;
+  text-wrap: balance;
 }
 
 .choice-panel p {
   color: #cfc4ad;
   line-height: 1.65;
+  text-wrap: pretty;
 }
 
 .choice-list {
@@ -738,6 +779,7 @@ input:focus-visible {
   color: #aaa08f;
   font-size: 13px;
   line-height: 1.45;
+  text-wrap: pretty;
 }
 
 .inventory-section {
@@ -793,20 +835,49 @@ input:focus-visible {
   text-align: right;
 }
 
+/* P0 anti-pattern fix: was `box-shadow: inset 3px 0 0 <color>` on every quality variant,
+   which directly violates the impeccable side-stripe ban. Replaced with full coloured
+   border + a subtle quality-tinted background wash that signals the same rarity
+   without simulating a stripe. */
 .item-row.rare {
-  border-color: rgba(115, 154, 214, 0.68);
-  box-shadow: inset 3px 0 0 rgba(115, 154, 214, 0.72);
+  border-color: rgb(var(--blue-rgb) / 0.68);
+  background:
+    linear-gradient(180deg, rgb(var(--blue-rgb) / 0.08), transparent 70%),
+    rgba(16, 20, 22, 0.92);
+}
+
+.item-row.rare:hover {
+  background:
+    linear-gradient(180deg, rgb(var(--blue-rgb) / 0.12), transparent 70%),
+    rgba(28, 33, 34, 0.96);
 }
 
 .item-row.corrupted {
-  border-color: rgba(155, 86, 166, 0.72);
-  box-shadow: inset 3px 0 0 rgba(155, 86, 166, 0.72);
+  border-color: rgb(var(--violet-rgb) / 0.72);
+  background:
+    linear-gradient(180deg, rgb(var(--violet-rgb) / 0.1), transparent 70%),
+    rgba(16, 20, 22, 0.92);
+}
+
+.item-row.corrupted:hover {
+  background:
+    linear-gradient(180deg, rgb(var(--violet-rgb) / 0.14), transparent 70%),
+    rgba(28, 33, 34, 0.96);
 }
 
 .item-row.relic,
 .item-row.mythic {
-  border-color: rgba(218, 169, 73, 0.76);
-  box-shadow: inset 3px 0 0 rgba(218, 169, 73, 0.78);
+  border-color: rgb(var(--gold-rgb) / 0.76);
+  background:
+    linear-gradient(180deg, rgb(var(--gold-rgb) / 0.09), transparent 70%),
+    rgba(16, 20, 22, 0.92);
+}
+
+.item-row.relic:hover,
+.item-row.mythic:hover {
+  background:
+    linear-gradient(180deg, rgb(var(--gold-rgb) / 0.14), transparent 70%),
+    rgba(28, 33, 34, 0.96);
 }
 
 .quest-list,
@@ -869,5 +940,76 @@ input:focus-visible {
     left: 10px;
     right: 10px;
     bottom: 10px;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   Reduced-motion: replace looping pulse with static
+   high-intensity shadow; kill all transitions/animations.
+   Required by WCAG 2.3.3 and PRODUCT.md a11y.
+   ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .disi-avatar.stage-3::after {
+    /* Keep the danger signal as a static heavy glow, not a pulse. */
+    animation: none !important;
+    opacity: 0.7;
+  }
+
+  .choice-list button:hover,
+  .item-row:hover {
+    transform: none;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   Windows high-contrast / forced-colors: collapse
+   transparencies and backdrop-blur to system colors
+   so modals and panels remain identifiable.
+   ───────────────────────────────────────────── */
+@media (forced-colors: active) {
+  .panel-section,
+  .creation-panel,
+  .dialogue-panel,
+  .choice-panel,
+  .vision-frame,
+  .meter,
+  .hud-pill,
+  .disi-avatar {
+    background: Canvas;
+    border-color: CanvasText;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+
+  .primary-action,
+  .selected,
+  button:focus-visible,
+  input:focus-visible {
+    outline: 2px solid Highlight;
+  }
+
+  .disi-avatar::after {
+    /* Glow layer is pure decoration; suppress in forced-colors so the
+       avatar plate stays a single legible Canvas rectangle. */
+    box-shadow: none;
+    opacity: 0;
+    animation: none;
+  }
+
+  .item-row.rare,
+  .item-row.corrupted,
+  .item-row.relic,
+  .item-row.mythic {
+    background: Canvas;
+    /* Quality is communicated via border + label, not the tint wash (which forced-colors strips). */
   }
 }

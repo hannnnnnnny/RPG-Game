@@ -3,7 +3,7 @@ export type Gender = "female" | "male" | "unknown";
 export type PlayerProfile = {
   name: string;
   gender: Gender;
-  appearance: "ashen" | "wanderer" | "miner" | "noble";
+  appearance: "ashen" | "wanderer" | "miner" | "noble" | "dwarf";
 };
 
 export type WorldTier = 1 | 2 | 3 | 4 | 5;
