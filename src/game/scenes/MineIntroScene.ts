@@ -99,26 +99,47 @@ export class MineIntroScene extends Phaser.Scene {
 
   private createPlayer() {
     const texture = this.make.graphics({ x: 0, y: 0 });
-    texture.fillStyle(0xc8c2b5, 1);
-    texture.fillCircle(16, 16, 14);
-    texture.fillStyle(0x2d3942, 1);
-    texture.fillRect(10, 13, 12, 18);
-    texture.generateTexture("player", 32, 32);
+    texture.fillStyle(0x111820, 1);
+    texture.fillRoundedRect(11, 21, 26, 28, 7);
+    texture.fillStyle(0x26313a, 1);
+    texture.fillTriangle(7, 26, 24, 5, 41, 26);
+    texture.fillRoundedRect(8, 19, 32, 19, 11);
+    texture.fillStyle(0xd8c9b8, 1);
+    texture.fillEllipse(24, 25, 22, 26);
+    texture.fillStyle(0x121416, 1);
+    texture.fillCircle(19, 23, 2);
+    texture.fillCircle(29, 23, 2);
+    texture.lineStyle(1, 0x7f685c, 0.9);
+    texture.lineBetween(24, 25, 23, 30);
+    texture.lineStyle(2, 0x2f3941, 1);
+    texture.strokeRoundedRect(8, 19, 32, 19, 11);
+    texture.fillStyle(0x1b252c, 1);
+    texture.fillRect(17, 39, 14, 11);
+    texture.generateTexture("player", 48, 56);
     texture.destroy();
 
     this.player = this.physics.add.image(155, 165, "player");
-    this.player.setCircle(14);
+    this.player.setCircle(18, 6, 12);
     this.player.setCollideWorldBounds(true);
   }
 
   private createEnemies() {
     const texture = this.make.graphics({ x: 0, y: 0 });
-    texture.fillStyle(0x4f235d, 1);
-    texture.fillCircle(18, 18, 16);
-    texture.fillStyle(0x050505, 1);
-    texture.fillCircle(13, 14, 3);
-    texture.fillCircle(23, 14, 3);
-    texture.generateTexture("infected-dwarf", 36, 36);
+    texture.fillStyle(0x2a122f, 1);
+    texture.fillRoundedRect(10, 22, 24, 24, 6);
+    texture.fillStyle(0x6b2c80, 1);
+    texture.fillEllipse(22, 22, 30, 34);
+    texture.fillStyle(0x050506, 1);
+    texture.fillCircle(16, 19, 3);
+    texture.fillCircle(28, 19, 3);
+    texture.lineStyle(2, 0x1a071f, 1);
+    texture.lineBetween(17, 30, 27, 30);
+    texture.lineStyle(2, 0x9d5fb4, 0.72);
+    texture.lineBetween(11, 13, 7, 9);
+    texture.lineBetween(33, 13, 37, 9);
+    texture.fillStyle(0x2d1735, 1);
+    texture.fillRect(16, 38, 12, 10);
+    texture.generateTexture("infected-dwarf", 44, 52);
     texture.destroy();
 
     [
@@ -127,7 +148,7 @@ export class MineIntroScene extends Phaser.Scene {
       [1075, 575]
     ].forEach(([x, y]) => {
       const body = this.physics.add.image(x, y, "infected-dwarf");
-      body.setCircle(16);
+      body.setCircle(17, 5, 8);
       body.setCollideWorldBounds(true);
       this.enemies.push({ body, hp: 32, attackCooldown: 0 });
     });

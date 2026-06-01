@@ -228,10 +228,12 @@ input:focus-visible {
 .portrait {
   width: 48px;
   height: 48px;
+  position: relative;
   border-radius: 7px;
   border: 1px solid rgba(239, 232, 215, 0.24);
   display: block;
   box-shadow: inset 0 -12px 20px rgba(0, 0, 0, 0.24);
+  overflow: hidden;
 }
 
 .portrait.ashen {
@@ -248,6 +250,44 @@ input:focus-visible {
 
 .portrait.noble {
   background: linear-gradient(135deg, #d9c990, #44375c);
+}
+
+.portrait::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 9px;
+  width: 22px;
+  height: 26px;
+  transform: translateX(-50%);
+  border-radius: 50% 50% 45% 45%;
+  background: linear-gradient(180deg, #e0d0bd, #b79d86);
+  box-shadow: 0 14px 0 rgba(22, 25, 25, 0.86);
+}
+
+.portrait::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 20px;
+  width: 14px;
+  height: 4px;
+  transform: translateX(-50%);
+  background:
+    radial-gradient(circle at 2px 2px, #121416 0 2px, transparent 2px),
+    radial-gradient(circle at 12px 2px, #121416 0 2px, transparent 2px);
+}
+
+.portrait.wanderer::before {
+  background: linear-gradient(180deg, #c8a59c, #8b6b63);
+}
+
+.portrait.miner::before {
+  background: linear-gradient(180deg, #d0a978, #8b6844);
+}
+
+.portrait.noble::before {
+  background: linear-gradient(180deg, #e6d7bd, #b6a18a);
 }
 
 .primary-action {
