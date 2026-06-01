@@ -10,3 +10,12 @@ vite.config.js
 vite.config.d.ts
 output/playwright
 .claude/launch.json
+.agents/skills/design-taste-frontend/SKILL.md
+.agents/skills/design-taste-frontend/SKILL.md
+.agents/skills/design-taste-frontend/SKILL.md
+.agents/skills/design-taste-frontend/SKILL.md
+.agents/skills/design-taste-frontend/SKILL.md
+.agents/skills/design-taste-frontend/SKILL.md
+/.claude
+/.agents
+skills-lock.json
