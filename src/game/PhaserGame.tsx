@@ -13,7 +13,8 @@ export function PhaserGame() {
       type: Phaser.AUTO,
       parent: hostRef.current,
       backgroundColor: "#07090b",
-      pixelArt: false,
+      pixelArt: true,
+      roundPixels: true,
       physics: {
         default: "arcade",
         arcade: {
