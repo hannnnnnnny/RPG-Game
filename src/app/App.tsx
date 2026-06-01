@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState } from "react";
+=======
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+>>>>>>> Stashed changes
 import {
   Backpack,
   Coins,
@@ -16,6 +20,7 @@ import type { Gender, PlayerProfile } from "../core/types";
 
 const PhaserGame = lazy(() => import("../game/PhaserGame").then((module) => ({ default: module.PhaserGame })));
 
+<<<<<<< Updated upstream
 /**
  * Modal accessibility hook: focus trap + ESC close + focus restoration.
  *
@@ -115,6 +120,50 @@ function useModalA11y<T extends HTMLElement>(
   }, [open]);
 
   return containerRef;
+=======
+function PixelImage({
+  src,
+  lowRes,
+  width,
+  height,
+  alt,
+  className
+}: {
+  src: string;
+  lowRes: number;
+  width: number;
+  height: number;
+  alt?: string;
+  className?: string;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const img = new Image();
+    img.src = src;
+    img.onload = () => {
+      ctx.imageSmoothingEnabled = false;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    };
+  }, [src, lowRes]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={lowRes}
+      height={lowRes}
+      role="img"
+      aria-label={alt}
+      className={className}
+      style={{ width, height, imageRendering: "pixelated" }}
+    />
+  );
+>>>>>>> Stashed changes
 }
 
 export function App() {
@@ -239,7 +288,13 @@ function DisiAvatar() {
   const labels = ["神志清明", "渗透中", "意志崩碎"];
   return (
     <div className={`disi-avatar stage-${stage}`} aria-label="迪西状态">
-      <img src={`assets/characters/disi_stage${stage}.jpg`} alt={`迪西第${stage}阶段`} />
+      <PixelImage
+        src={`/assets/characters/disi_stage${stage}.jpg`}
+        lowRes={32}
+        width={64}
+        height={64}
+        alt={`迪西第${stage}阶段`}
+      />
       <div className="disi-avatar-meta">
         <strong>{profile?.name ?? "迪西"}</strong>
         <span>污染 {corruption} · {labels[stage - 1]}</span>
@@ -267,9 +322,15 @@ function VisionOverlay() {
       onClick={close}
     >
       <div className="vision-frame" onClick={(event) => event.stopPropagation()}>
+<<<<<<< Updated upstream
         <img src={vision.image} alt="幻象" />
         {vision.caption && <p id={captionId}>{vision.caption}</p>}
         <button type="button" onClick={close}>
+=======
+        <PixelImage src={vision.image} lowRes={96} width={480} height={480} alt="幻象" />
+        {vision.caption && <p>{vision.caption}</p>}
+        <button type="button" onClick={() => setVision(null)}>
+>>>>>>> Stashed changes
           闭上眼
         </button>
       </div>
@@ -353,7 +414,14 @@ function DialoguePanel() {
       aria-live="polite"
     >
       {isKhah && (
-        <img className="dialogue-portrait" src="assets/characters/khah.jpg" alt="克哈" />
+        <PixelImage
+          className="dialogue-portrait"
+          src="/assets/characters/khah.jpg"
+          lowRes={32}
+          width={80}
+          height={80}
+          alt="克哈"
+        />
       )}
       <div>
         <strong id={speakerId}>{dialogue.speaker}</strong>
