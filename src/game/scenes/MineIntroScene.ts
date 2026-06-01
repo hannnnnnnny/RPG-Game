@@ -30,6 +30,12 @@ export class MineIntroScene extends Phaser.Scene {
     super("MineIntroScene");
   }
 
+  preload() {
+    this.load.image("player_img", "assets/characters/disi_stage1.jpg");
+    this.load.image("dwarf_injured", "assets/characters/dwarf_injured.jpg");
+    this.load.image("dwarf_corrupted", "assets/characters/dwarf_corrupted.jpg");
+  }
+
   create() {
     this.physics.world.setBounds(0, 0, 1450, 900);
     this.cameras.main.setBounds(0, 0, 1450, 900);
@@ -98,57 +104,24 @@ export class MineIntroScene extends Phaser.Scene {
   }
 
   private createPlayer() {
-    const texture = this.make.graphics({ x: 0, y: 0 });
-    texture.fillStyle(0x111820, 1);
-    texture.fillRoundedRect(11, 21, 26, 28, 7);
-    texture.fillStyle(0x26313a, 1);
-    texture.fillTriangle(7, 26, 24, 5, 41, 26);
-    texture.fillRoundedRect(8, 19, 32, 19, 11);
-    texture.fillStyle(0xd8c9b8, 1);
-    texture.fillEllipse(24, 25, 22, 26);
-    texture.fillStyle(0x121416, 1);
-    texture.fillCircle(19, 23, 2);
-    texture.fillCircle(29, 23, 2);
-    texture.lineStyle(1, 0x7f685c, 0.9);
-    texture.lineBetween(24, 25, 23, 30);
-    texture.lineStyle(2, 0x2f3941, 1);
-    texture.strokeRoundedRect(8, 19, 32, 19, 11);
-    texture.fillStyle(0x1b252c, 1);
-    texture.fillRect(17, 39, 14, 11);
-    texture.generateTexture("player", 48, 56);
-    texture.destroy();
-
-    this.player = this.physics.add.image(155, 165, "player");
-    this.player.setCircle(18, 6, 12);
-    this.player.setCollideWorldBounds(true);
+    this.player = this.physics.add.image(155, 165, "player_img");
+    this.player.setDisplaySize(56, 64);
+    const tex = this.player;
+    const radius = Math.min(tex.width, tex.height) / 2;
+    tex.setCircle(radius, (tex.width - radius * 2) / 2, (tex.height - radius * 2) / 2);
+    tex.setCollideWorldBounds(true);
   }
 
   private createEnemies() {
-    const texture = this.make.graphics({ x: 0, y: 0 });
-    texture.fillStyle(0x2a122f, 1);
-    texture.fillRoundedRect(10, 22, 24, 24, 6);
-    texture.fillStyle(0x6b2c80, 1);
-    texture.fillEllipse(22, 22, 30, 34);
-    texture.fillStyle(0x050506, 1);
-    texture.fillCircle(16, 19, 3);
-    texture.fillCircle(28, 19, 3);
-    texture.lineStyle(2, 0x1a071f, 1);
-    texture.lineBetween(17, 30, 27, 30);
-    texture.lineStyle(2, 0x9d5fb4, 0.72);
-    texture.lineBetween(11, 13, 7, 9);
-    texture.lineBetween(33, 13, 37, 9);
-    texture.fillStyle(0x2d1735, 1);
-    texture.fillRect(16, 38, 12, 10);
-    texture.generateTexture("infected-dwarf", 44, 52);
-    texture.destroy();
-
     [
       [510, 245],
       [825, 395],
       [1075, 575]
     ].forEach(([x, y]) => {
-      const body = this.physics.add.image(x, y, "infected-dwarf");
-      body.setCircle(17, 5, 8);
+      const body = this.physics.add.image(x, y, "dwarf_corrupted");
+      body.setDisplaySize(52, 58);
+      const radius = Math.min(body.width, body.height) / 2;
+      body.setCircle(radius, (body.width - radius * 2) / 2, (body.height - radius * 2) / 2);
       body.setCollideWorldBounds(true);
       this.enemies.push({ body, hp: 32, attackCooldown: 0 });
     });
@@ -157,8 +130,8 @@ export class MineIntroScene extends Phaser.Scene {
   private createInteractables() {
     this.dwarfZone = this.add.zone(395, 230, 72, 72);
     this.physics.add.existing(this.dwarfZone, true);
-    this.add.circle(395, 230, 18, 0x5f4136, 1);
-    this.add.text(365, 255, "受伤矮人", { color: "#b99f82", fontSize: "13px" });
+    this.add.image(395, 230, "dwarf_injured").setDisplaySize(44, 50);
+    this.add.text(365, 260, "受伤矮人", { color: "#b99f82", fontSize: "13px" });
 
     this.totemZone = this.add.zone(910, 382, 82, 82);
     this.physics.add.existing(this.totemZone, true);
@@ -318,6 +291,10 @@ export class MineIntroScene extends Phaser.Scene {
       if (approved) {
         this.totemTouchedInScene = true;
         store.addItem(generateLoot("totem", store.worldState.worldTier));
+        store.setVision({
+          image: "assets/characters/dwarf_captain_vision.jpg",
+          caption: "矮人队长打开图腾的一瞬间，你看见紫色皮肤、黑色眼睛，以及一只虫子钻入王冠。"
+        });
         store.setDialogue({
           speaker: "残响",
           text: "矮人队长打开图腾的一瞬间，你看见紫色皮肤、黑色眼睛，以及一只虫子钻入王冠。",
