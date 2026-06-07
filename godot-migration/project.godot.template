@@ -1,0 +1,82 @@
+; ===================================================================
+; project.godot 模板 —— 不要直接用！这只是参考。
+;
+; 正确做法：
+;   1. 用 Godot 4.3 editor 新建项目 TidesOfKhah
+;   2. Godot 自动生成它自己的 project.godot
+;   3. 然后按下面的 [autoload] 段落，去 Project Settings → Autoload
+;      手动添加这 4 个单例
+;
+; 之所以不让你直接覆盖：Godot 会跟踪 .uid 和 importer hash，
+; 手写的 project.godot 容易出现资源找不到的怪问题。
+; ===================================================================
+
+config_version=5
+
+[application]
+
+config/name="TidesOfKhah"
+config/description="《潮蚀之环》—— 2D 暗黑克苏鲁 ARPG"
+run/main_scene="res://scenes/scenes_main/MainGame.tscn"
+config/features=PackedStringArray("4.3", "GL Compatibility")
+config/icon="res://icon.svg"
+
+[autoload]
+
+; 添加顺序很重要：Types 必须最先（被其他三个引用）
+Types="*res://scripts/core/types.gd"
+AidlcRules="*res://scripts/core/aidlc_rules.gd"
+LootGenerator="*res://scripts/core/loot_generator.gd"
+GameState="*res://scripts/core/game_state.gd"
+SaveSystem="*res://scripts/core/save_system.gd"
+
+[display]
+
+; 像素游戏推荐 720p 基础分辨率（按整数倍缩放）
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[rendering]
+
+; 2D 像素艺术必备：关闭抗锯齿，开 pixel snap
+2d/snap/snap_2d_transforms_to_pixel=true
+2d/snap/snap_2d_vertices_to_pixel=true
+textures/canvas_textures/default_texture_filter=0
+; 0 = Nearest（像素 sprite 必须用这个，不会糊）
+
+[input]
+
+; 移动 —— W/A/S/D + 方向键
+move_up={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"keycode":87),Object(InputEventKey,"keycode":4194320)]
+}
+move_down={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"keycode":83),Object(InputEventKey,"keycode":4194322)]
+}
+move_left={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"keycode":65),Object(InputEventKey,"keycode":4194319)]
+}
+move_right={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"keycode":68),Object(InputEventKey,"keycode":4194321)]
+}
+; 攻击 J
+attack={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"keycode":74)]
+}
+; 翻滚 SPACE
+roll={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"keycode":32)]
+}
+; 互动 E
+interact={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"keycode":69)]
+}
