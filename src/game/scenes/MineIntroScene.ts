@@ -264,7 +264,7 @@ export class MineIntroScene extends Phaser.Scene {
       });
       store.setActiveChoice({
         id: "first_dwarf_choice",
-        title: "第一个永久选择",
+        title: "第一个选择",
         body: "一个矮人倒在铁轨旁，手腕布条下有正在扩散的刺青。低语催你继续走。",
         options: [
           { id: "save", label: "救他", description: "理智稳定，但小镇可能承受感染风险。" },
