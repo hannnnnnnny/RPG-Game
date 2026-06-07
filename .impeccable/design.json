@@ -1,0 +1,360 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-02T00:00:00.000Z",
+  "title": "Design System: 潮蚀之环",
+  "extensions": {
+    "colorMeta": {
+      "miners-lantern-gold": {
+        "role": "primary",
+        "displayName": "Miner's Lantern Gold",
+        "canonical": "oklch(79% 0.115 85)",
+        "tonalRamp": [
+          "oklch(20% 0.04 85)",
+          "oklch(32% 0.07 85)",
+          "oklch(45% 0.10 85)",
+          "oklch(58% 0.115 85)",
+          "oklch(68% 0.12 85)",
+          "oklch(79% 0.115 85)",
+          "oklch(87% 0.09 85)",
+          "oklch(95% 0.04 85)"
+        ]
+      },
+      "lantern-wick": {
+        "role": "primary",
+        "displayName": "Lantern Wick",
+        "canonical": "oklch(50% 0.105 70)",
+        "tonalRamp": [
+          "oklch(18% 0.05 70)",
+          "oklch(28% 0.08 70)",
+          "oklch(38% 0.10 70)",
+          "oklch(50% 0.105 70)",
+          "oklch(62% 0.10 70)",
+          "oklch(72% 0.09 70)",
+          "oklch(85% 0.06 70)",
+          "oklch(94% 0.03 70)"
+        ]
+      },
+      "dwarven-wound": {
+        "role": "secondary",
+        "displayName": "Dwarven Wound",
+        "canonical": "oklch(62% 0.13 20)",
+        "tonalRamp": [
+          "oklch(20% 0.06 20)",
+          "oklch(32% 0.09 20)",
+          "oklch(45% 0.12 20)",
+          "oklch(55% 0.13 20)",
+          "oklch(62% 0.13 20)",
+          "oklch(72% 0.11 20)",
+          "oklch(85% 0.07 20)",
+          "oklch(94% 0.03 20)"
+        ]
+      },
+      "mine-lichen": {
+        "role": "secondary",
+        "displayName": "Mine Lichen",
+        "canonical": "oklch(70% 0.07 130)",
+        "tonalRamp": [
+          "oklch(20% 0.04 130)",
+          "oklch(32% 0.05 130)",
+          "oklch(45% 0.065 130)",
+          "oklch(58% 0.07 130)",
+          "oklch(70% 0.07 130)",
+          "oklch(80% 0.06 130)",
+          "oklch(89% 0.04 130)",
+          "oklch(96% 0.02 130)"
+        ]
+      },
+      "distant-lantern": {
+        "role": "secondary",
+        "displayName": "Distant Lantern",
+        "canonical": "oklch(73% 0.07 230)",
+        "tonalRamp": [
+          "oklch(20% 0.04 230)",
+          "oklch(32% 0.05 230)",
+          "oklch(45% 0.065 230)",
+          "oklch(58% 0.07 230)",
+          "oklch(73% 0.07 230)",
+          "oklch(82% 0.06 230)",
+          "oklch(90% 0.04 230)",
+          "oklch(96% 0.02 230)"
+        ]
+      },
+      "khah-whisper-violet": {
+        "role": "tertiary",
+        "displayName": "Khah's Whisper Violet",
+        "canonical": "oklch(56% 0.11 320)",
+        "tonalRamp": [
+          "oklch(18% 0.05 320)",
+          "oklch(28% 0.08 320)",
+          "oklch(38% 0.10 320)",
+          "oklch(46% 0.11 320)",
+          "oklch(56% 0.11 320)",
+          "oklch(70% 0.09 320)",
+          "oklch(85% 0.06 320)",
+          "oklch(94% 0.03 320)"
+        ]
+      },
+      "lantern-cream": {
+        "role": "neutral",
+        "displayName": "Lantern Cream",
+        "canonical": "oklch(93% 0.025 85)",
+        "tonalRamp": [
+          "oklch(20% 0.015 85)",
+          "oklch(35% 0.018 85)",
+          "oklch(50% 0.02 85)",
+          "oklch(65% 0.022 85)",
+          "oklch(78% 0.024 85)",
+          "oklch(86% 0.025 85)",
+          "oklch(93% 0.025 85)",
+          "oklch(98% 0.012 85)"
+        ]
+      },
+      "tunnel-mist": {
+        "role": "neutral",
+        "displayName": "Tunnel Mist",
+        "canonical": "oklch(72% 0.015 75)",
+        "tonalRamp": [
+          "oklch(18% 0.008 75)",
+          "oklch(30% 0.012 75)",
+          "oklch(42% 0.014 75)",
+          "oklch(54% 0.015 75)",
+          "oklch(72% 0.015 75)",
+          "oklch(82% 0.013 75)",
+          "oklch(90% 0.01 75)",
+          "oklch(97% 0.005 75)"
+        ]
+      },
+      "soot-gray": {
+        "role": "neutral",
+        "displayName": "Soot Gray (decorative ceiling)",
+        "canonical": "oklch(52% 0.012 75)",
+        "tonalRamp": [
+          "oklch(15% 0.006 75)",
+          "oklch(25% 0.008 75)",
+          "oklch(38% 0.01 75)",
+          "oklch(52% 0.012 75)",
+          "oklch(65% 0.012 75)",
+          "oklch(78% 0.01 75)",
+          "oklch(88% 0.008 75)",
+          "oklch(96% 0.004 75)"
+        ]
+      },
+      "mine-black": {
+        "role": "neutral",
+        "displayName": "Mine Black",
+        "canonical": "oklch(15% 0.004 200)",
+        "tonalRamp": [
+          "oklch(10% 0.003 200)",
+          "oklch(15% 0.004 200)",
+          "oklch(22% 0.005 200)",
+          "oklch(32% 0.006 200)",
+          "oklch(45% 0.008 200)",
+          "oklch(62% 0.008 200)",
+          "oklch(80% 0.006 200)",
+          "oklch(95% 0.003 200)"
+        ]
+      },
+      "tunnel-black": {
+        "role": "neutral",
+        "displayName": "Tunnel Black",
+        "canonical": "oklch(18% 0.004 200)",
+        "tonalRamp": [
+          "oklch(12% 0.003 200)",
+          "oklch(18% 0.004 200)",
+          "oklch(25% 0.005 200)",
+          "oklch(35% 0.006 200)",
+          "oklch(48% 0.008 200)",
+          "oklch(64% 0.008 200)",
+          "oklch(82% 0.006 200)",
+          "oklch(96% 0.003 200)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display Serif",
+        "purpose": "Hero H1, vision captions, choice-panel headline. Serif sanctuary — never below 24px, never in UI controls."
+      },
+      "headline": {
+        "displayName": "Choice Headline",
+        "purpose": "Choice-panel ritual title. The only second place Georgia is allowed."
+      },
+      "title": {
+        "displayName": "Section Title",
+        "purpose": "Section heads (背包/任务/日志). Sans, 800 weight, paired with gold icon."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All paragraph copy, dialogue, log entries. Chinese-first stack mandatory."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Field labels, brand-mark, HUD pill contents. Only permitted micro-uppercase context."
+      },
+      "numeric": {
+        "displayName": "Tabular Numeric",
+        "purpose": "All HUD / stat / strength / gold numeric readouts. tabular-nums mandatory."
+      }
+    },
+    "shadows": [
+      {
+        "name": "resting",
+        "value": "0 12px 34px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.035)",
+        "purpose": "Default panel / card. Mid-depth lift with inset top reflection."
+      },
+      {
+        "name": "hovering",
+        "value": "0 18px 60px rgba(0,0,0,0.34), inset 0 0 0 1px rgba(255,255,255,0.018)",
+        "purpose": "Play-area, disi-avatar resting. HUD floating above Phaser canvas."
+      },
+      {
+        "name": "imposing",
+        "value": "0 22px 70px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.04)",
+        "purpose": "Dialogue panel, choice panel, primary-action. Critical interactions that must stop the player."
+      },
+      {
+        "name": "dramatic",
+        "value": "0 30px 80px rgba(0,0,0,0.6)",
+        "purpose": "Vision-frame, creation-panel ritual moments. Ceremony tier."
+      },
+      {
+        "name": "stage-pulse",
+        "value": "0 12px 36px rgba(140,32,56,0.32)",
+        "purpose": "Disi avatar stage-3 only. Pulses to indicate vessel consumption. Reduced-motion fallback required."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-tactile",
+        "value": "cubic-bezier(0.22, 0.61, 0.36, 1)",
+        "purpose": "Default 160ms button state / hover transitions. Exponential ease-out, no bounce."
+      },
+      {
+        "name": "ease-ritual",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Modal/vision overlay enter. ease-out-quint feel."
+      },
+      {
+        "name": "duration-tactile",
+        "value": "160ms",
+        "purpose": "Default button/hover."
+      },
+      {
+        "name": "duration-modal",
+        "value": "240ms",
+        "purpose": "Disi-avatar border-color & box-shadow on stage shift."
+      },
+      {
+        "name": "stage-pulse-cycle",
+        "value": "1.6s ease-in-out infinite",
+        "purpose": "disi-pulse keyframe. Requires reduced-motion crossfade fallback."
+      }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "640px" },
+      { "name": "tablet", "value": "1100px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one-per-screen unrecoverable commit. Gold gradient fill, dark text, dramatic shadow.",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\">进入矿井</button>",
+      "css": ".ds-btn-primary { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 50px; padding: 13px 20px; border: 1px solid rgba(236,197,103,0.54); border-radius: 6px; background: linear-gradient(180deg, #d2aa51, #9c6e2f); color: #141008; font-family: Aptos, 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', system-ui, sans-serif; font-weight: 800; font-size: 15px; letter-spacing: 0.02em; cursor: pointer; box-shadow: 0 14px 34px rgba(122,83,29,0.28); transition: transform 160ms cubic-bezier(0.22,0.61,0.36,1), background 160ms, box-shadow 160ms; } .ds-btn-primary:hover { background: linear-gradient(180deg, #e3bd62, #a87934); box-shadow: 0 18px 40px rgba(122,83,29,0.34); } .ds-btn-primary:active { transform: translateY(1px) scale(0.99); } .ds-btn-primary:focus-visible { outline: 2px solid rgba(217,182,98,0.72); outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Selectable option in segmented controls, appearance grid, choice list. Dark bg, gold hairline border.",
+      "html": "<button class=\"ds-btn-secondary\" type=\"button\">未知</button>",
+      "css": ".ds-btn-secondary { min-height: 46px; padding: 12px 14px; border: 1px solid rgba(225,211,168,0.18); border-radius: 6px; background: rgba(18,22,23,0.92); color: #f2ead8; font-family: Aptos, 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', system-ui, sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; transition: transform 160ms, background 160ms, border-color 160ms; } .ds-btn-secondary:hover { background: rgba(36,41,40,0.96); border-color: rgba(225,197,125,0.36); } .ds-btn-secondary:active { transform: translateY(1px) scale(0.99); } .ds-btn-secondary:focus-visible { outline: 2px solid rgba(217,182,98,0.72); outline-offset: 2px; } .ds-btn-secondary.is-selected { border-color: rgba(217,182,98,0.86); background: linear-gradient(180deg, rgba(83,64,34,0.98), rgba(42,35,25,0.98)); box-shadow: inset 0 0 0 1px rgba(255,232,171,0.08); }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-text",
+      "description": "Character name and form fields. Inset chiseled feel with gold focus glow.",
+      "html": "<input class=\"ds-input\" type=\"text\" value=\"无名者\" maxlength=\"18\" />",
+      "css": ".ds-input { width: 100%; padding: 13px 14px; border: 1px solid rgba(220,202,150,0.3); border-radius: 6px; background: rgba(7,9,10,0.94); color: #f2ead8; font-family: Aptos, 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', system-ui, sans-serif; font-size: 15px; outline: none; box-shadow: inset 0 1px 10px rgba(0,0,0,0.25); transition: border-color 160ms, box-shadow 160ms; } .ds-input:focus { border-color: #d9b662; box-shadow: 0 0 0 3px rgba(217,182,98,0.11), inset 0 1px 10px rgba(0,0,0,0.25); } .ds-input::placeholder { color: #b3aa98; }"
+    },
+    {
+      "name": "Panel Section",
+      "kind": "card",
+      "refersTo": "card-panel",
+      "description": "Side-panel cards (character / inventory / quest / log). Tunnel-Black gradient with faint gold weave and gold-line border.",
+      "html": "<section class=\"ds-panel\"><header class=\"ds-panel-head\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#d9b662\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14.5 17.5 3 6V3h3l11.5 11.5\"/><circle cx=\"6.5\" cy=\"6.5\" r=\"0.5\" fill=\"#d9b662\"/></svg><h2>背包</h2></header><p class=\"ds-panel-empty\">矿袋空着，只剩黑潮和铁锈的气味。</p></section>",
+      "css": ".ds-panel { padding: 14px; border: 1px solid rgba(206,181,116,0.18); border-radius: 8px; background: linear-gradient(180deg, rgba(17,20,21,0.94), rgba(10,12,13,0.94)), repeating-linear-gradient(135deg, rgba(217,182,98,0.025) 0, rgba(217,182,98,0.025) 1px, transparent 1px, transparent 18px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.035), 0 12px 34px rgba(0,0,0,0.18); color: #f2ead8; font-family: Aptos, 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', system-ui, sans-serif; } .ds-panel-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: #d9b662; } .ds-panel-head h2 { margin: 0; font-size: 16px; font-weight: 800; } .ds-panel-empty { margin: 0; color: #b3aa98; line-height: 1.65; }"
+    },
+    {
+      "name": "HUD Pill",
+      "kind": "chip",
+      "refersTo": "hud-pill",
+      "description": "Floating HUD readout (污染/觉醒/金币). Backdrop-blurred metal nameplate hovering over Phaser canvas.",
+      "html": "<div class=\"ds-pill\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#f2ead8\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"9\" cy=\"12\" r=\"1\"/><circle cx=\"15\" cy=\"12\" r=\"1\"/><path d=\"M8 20v2h8v-2\"/><path d=\"M12.5 17v-3\"/><path d=\"M16 8a4 4 0 0 0-8 0\"/><path d=\"M4 14a8 8 0 0 0 16 0V8a8 8 0 0 0-16 0Z\"/></svg><span>污染 42</span></div>",
+      "css": ".ds-pill { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 10px; border: 1px solid rgba(231,214,165,0.18); border-radius: 7px; background: rgba(8,10,11,0.76); backdrop-filter: blur(12px); color: #f2ead8; font-family: Aptos, 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', system-ui, sans-serif; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 10px 30px rgba(0,0,0,0.18); }"
+    },
+    {
+      "name": "Dialogue Panel",
+      "kind": "custom",
+      "refersTo": "dialogue-panel",
+      "description": "In-world speech panel. Whisper variant for Khah uses violet border + pixelated portrait.",
+      "html": "<section class=\"ds-dialogue is-whisper\"><img class=\"ds-dialogue-portrait\" alt=\"\" width=\"80\" height=\"80\" src=\"data:image/svg+xml;utf8,%3Csvg xmlns%3D%27http%3A//www.w3.org/2000/svg%27 viewBox%3D%270 0 1 1%27 width%3D%2780%27 height%3D%2780%27%3E%3Crect width%3D%271%27 height%3D%271%27 fill%3D%27%238b5a9b%27/%3E%3C/svg%3E\"/><div class=\"ds-dialogue-body\"><strong>克哈低语</strong><p>血没有溅到你身上，它像认识你一样避开了。</p></div><button class=\"ds-dialogue-close\" aria-label=\"关闭对话\" type=\"button\">×</button></section>",
+      "css": ".ds-dialogue { display: flex; align-items: flex-start; gap: 18px; padding: 16px; border: 1px solid rgba(217,182,98,0.24); border-radius: 8px; background: linear-gradient(180deg, rgba(12,14,15,0.92), rgba(6,8,9,0.94)); backdrop-filter: blur(12px); box-shadow: 0 22px 70px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.04); color: #f2ead8; font-family: Aptos, 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', system-ui, sans-serif; } .ds-dialogue.is-whisper { border-color: rgba(144,80,163,0.46); } .ds-dialogue-portrait { flex: 0 0 auto; width: 80px; height: 80px; border-radius: 6px; border: 1px solid rgba(155,86,166,0.5); image-rendering: pixelated; box-shadow: 0 6px 18px rgba(95,36,119,0.42); } .ds-dialogue-body { flex: 1 1 auto; min-width: 0; } .ds-dialogue-body strong { color: #d9b662; font-weight: 800; } .ds-dialogue-body p { margin: 6px 0 0; line-height: 1.65; text-wrap: pretty; max-width: 68rem; } .ds-dialogue-close { flex: 0 0 auto; width: 32px; height: 32px; border: 1px solid rgba(255,255,255,0.16); border-radius: 50%; background: rgba(24,28,29,0.92); color: #e8dcc2; cursor: pointer; font-size: 18px; }"
+    },
+    {
+      "name": "Inventory Item Row",
+      "kind": "card",
+      "refersTo": "item-row",
+      "description": "Loot row with quality-tinted full border (replacement for the banned side-stripe inset shadow). Quality color carries via icon + integrated border, not as a left stripe.",
+      "html": "<button class=\"ds-item ds-item--corrupted\" type=\"button\"><span class=\"ds-item-icon\" aria-hidden=\"true\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#8b5a9b\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 2 4 7l8 5 8-5-8-5z\"/><path d=\"m4 17 8 5 8-5\"/><path d=\"m4 12 8 5 8-5\"/></svg></span><span class=\"ds-item-meta\"><strong>蚀骨长剑</strong><small>corrupted · 强度 38 · 已装备</small></span><em>污染力 +12</em></button>",
+      "css": ".ds-item { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 58px; padding: 10px; border: 1px solid rgba(225,211,168,0.18); border-radius: 6px; background: rgba(16,20,22,0.92); color: #f2ead8; font-family: Aptos, 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', system-ui, sans-serif; cursor: pointer; text-align: left; transition: background 160ms, transform 160ms; } .ds-item:hover { background: rgba(28,33,34,0.96); transform: translateX(2px); } .ds-item-icon { flex: 0 0 auto; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 4px; background: rgba(8,10,11,0.6); } .ds-item-meta { flex: 1 1 auto; min-width: 0; } .ds-item-meta strong { display: block; color: #f3e4bd; font-weight: 700; } .ds-item-meta small { display: block; color: #a9a08f; font-size: 12px; margin-top: 2px; } .ds-item em { max-width: 42%; text-align: right; color: #a9a08f; font-style: normal; font-size: 12px; } .ds-item--rare { border-color: rgba(115,154,214,0.68); } .ds-item--rare .ds-item-icon { background: rgba(115,154,214,0.16); } .ds-item--corrupted { border-color: rgba(155,86,166,0.72); } .ds-item--corrupted .ds-item-icon { background: rgba(155,86,166,0.18); } .ds-item--relic { border-color: rgba(218,169,73,0.76); } .ds-item--relic .ds-item-icon { background: rgba(218,169,73,0.18); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Vessel's Threshold",
+    "overview": "界面是玩家容器觉醒的门槛。系统当下的语调是冷峻矮人金属：黑铁载体上点状金光、锐边、薄阴影里的重量感。但门槛是双向的——随着污染（worldState.corruption）和容器觉醒（worldState.vesselAwakening）攀升，UI 的色相和能量应当能向克哈的紫和黑潮的血推进。整套系统拒绝四种东西：迷你传三型手游面板、Roblox 卡通调、AAA 设置菜单的全灰冷青、Notion/Linear 的 SaaS 净色。",
+    "keyCharacteristics": [
+      "黑铁载体（#080a0b 全屏底）+ 点状金光（#d9b662 ≤15% 屏占）+ 偶发紫红（仅在污染相关上下文）",
+      "三轴并列人格：潮湿腐烂 × 冷峻工业矮人机械 × 不可信梦境",
+      "衬线（Georgia）只在文学时刻：H1、Choice 标题、Vision caption",
+      "Material-dramatic elevation：modal 与 vision 走 22-90px 厚阴影",
+      "中文是基线，英文是充气符；font-stack 头部永远是中文家族"
+    ],
+    "rules": [
+      { "name": "The 15% Lantern Rule", "body": "Miner's Lantern Gold 在任何屏幕上的色块占比 ≤ 15%。超过这条线矿灯就不再是光源，变成装饰品。", "section": "colors" },
+      { "name": "The Violet Permission Rule", "body": "Khah's Whisper Violet 只在污染语义（觉醒第 2-3 阶、感染、低语对话、堕落装备、幻象）出现。永远不要当中性强调色用。", "section": "colors" },
+      { "name": "The Soot Ceiling Rule", "body": "#7f786b (Soot Gray) 是天花板不是地板，约 3.6:1，仅用于装饰性次级标签。一旦超过 14px 或承载可读信息，必须升级到 Tunnel Mist 或 Lantern Cream。", "section": "colors" },
+      { "name": "The Serif-Sanctuary Rule", "body": "Georgia 只允许在 H1 / Headline / Vision caption / Choice 标题。任何 button/label/HUD/≤16px 位置出现衬线都是错的。", "section": "typography" },
+      { "name": "The Chinese-First Stack Rule", "body": "所有 font-family 栈的首位必须是中文家族。引入任何 web font 之前先确认中文字形完整或显式 fallback。", "section": "typography" },
+      { "name": "The Tabular Numeric Rule", "body": "任何 HUD / stat-grid / 强度 / 金币 数值必须 font-variant-numeric: tabular-nums。数字跳动 = 体验未完成。", "section": "typography" },
+      { "name": "The Lit-from-Above Rule", "body": "任何卡片/面板/按钮的 inset highlight 永远在顶部，模拟矿灯反光。其他方向是错的。", "section": "elevation" },
+      { "name": "The Backdrop-Blur Rule", "body": "backdrop-filter: blur 只允许在悬浮于 Phaser 之上的 UI (HUD/dialogue/choice/vision)。在全屏 UI 上用 backdrop-blur 是 Notion/Linear SaaS 玻璃风，PRODUCT.md 已拒绝。", "section": "elevation" },
+      { "name": "The No-Mid-Shadow Rule", "body": "SaaS 风格 0 1px 2px rgba(0,0,0,0.1) 在矿黑底色上完全看不见，等于没写。要么 Resting (12px+)，要么不要 shadow。", "section": "elevation" }
+    ],
+    "dos": [
+      "Do verify every body text and label hits ≥ 4.5:1 against #080a0b. Lantern Cream 和 Tunnel Mist 安全，Soot Gray 是装饰天花板。",
+      "Do 在所有 font-family 栈的首位放中文家族（Microsoft YaHei / PingFang SC / Noto Sans SC）。English 是 fallback、不是 base。",
+      "Do 用 font-variant-numeric: tabular-nums 包住所有 HUD / stat-grid / 强度 数值。",
+      "Do 给每条新动画写 @media (prefers-reduced-motion: reduce) 替代方案。当前 disi-pulse 缺这一条，是技术债。",
+      "Do 用 Imposing/Dramatic shadow tier 强调仪式时刻（modal、choice、vision），让玩家停下来。",
+      "Do 用 Khah's Whisper Violet 仅在污染语义触发时（觉醒第 2-3 阶、感染、低语对话、堕落装备、幻象）。",
+      "Do 用 text-wrap: balance 包所有 h1-h3；text-wrap: pretty 包长 prose。"
+    ],
+    "donts": [
+      "Don't 在按钮、标签、表格、≤16px 任何文字上用 Georgia 衬线。Serif-Sanctuary Rule 死守。",
+      "Don't 让 Miner's Lantern Gold 超过一屏 15% 屏占。超过这条线，矿灯变装饰品。",
+      "Don't 在 .panel-section 或 .creation-panel 这类全屏 UI 用 backdrop-filter: blur。Backdrop-blur 只属于悬浮于 Phaser 之上的 HUD/dialogue/choice/vision。",
+      "Don't 使用 side-stripe border（border-left/right > 1px 或 inset Npx 0 0 color）作为分类着色。当前 item-row.rare/.corrupted/.relic 是这一禁令的违反，待重构：整圈彩色 border + 左侧 quality icon。",
+      "Don't 使用 24px+ 圆角。当前最大 12px（vision-frame），任何超过都是卡通调。",
+      "Don't 写 border: 1px solid + box-shadow ≥ 16px 在同一按钮 — ghost-card 通用 ban。Panel 例外（必须有 shadow），按钮只能二选一。",
+      "Don't 使用渐变文字（background-clip: text + gradient）。Miner's Lantern Gold 是单色 token。",
+      "Don't 引入小写 ALL-CAPS tracked eyebrow（ABOUT / 01·）在每个 section 顶部。brand-mark 是合法的单一品牌 kicker，不要扩展。",
+      "Don't 写 X剧场 / 不只是 X / 真正的 X 这类 marketing-meta 文案。",
+      "Don't 在 SaaS 风格 0 1px 2px shadow 上浪费时间。No-Mid-Shadow Rule。",
+      "Don't 使用迷你传三 / Roblox 卡通 / AAA 全灰 / Notion SaaS 任何一种调子。"
+    ]
+  }
+}

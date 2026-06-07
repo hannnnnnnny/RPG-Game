@@ -543,9 +543,15 @@ input:focus-visible {
 .disi-avatar canvas {
   width: 64px;
   height: 64px;
+<<<<<<< Updated upstream
   border-radius: var(--radius-xs);
   display: block;
   border: 1px solid rgb(var(--gold-rgb) / 0.36);
+=======
+  border-radius: 6px;
+  display: block;
+  border: 1px solid rgba(217, 182, 98, 0.36);
+>>>>>>> Stashed changes
   image-rendering: pixelated;
 }
 
@@ -630,8 +636,13 @@ input:focus-visible {
   margin: 0 auto;
   max-width: 100%;
   max-height: 60vh;
+<<<<<<< Updated upstream
   border-radius: var(--radius);
   border: 1px solid rgb(var(--violet-rgb) / 0.42);
+=======
+  border-radius: 8px;
+  border: 1px solid rgba(155, 86, 166, 0.42);
+>>>>>>> Stashed changes
   image-rendering: pixelated;
 }
 
@@ -655,9 +666,15 @@ input:focus-visible {
 .dialogue-portrait {
   width: 80px;
   height: 80px;
+<<<<<<< Updated upstream
   border-radius: var(--radius-xs);
   display: block;
   border: 1px solid rgb(var(--violet-rgb) / 0.5);
+=======
+  border-radius: 6px;
+  display: block;
+  border: 1px solid rgba(155, 86, 166, 0.5);
+>>>>>>> Stashed changes
   flex: 0 0 auto;
   box-shadow: 0 6px 18px rgba(95, 36, 119, 0.42);
   image-rendering: pixelated;
