@@ -1,8 +1,4 @@
-<<<<<<< Updated upstream
 import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState } from "react";
-=======
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
->>>>>>> Stashed changes
 import {
   Backpack,
   Coins,
@@ -20,7 +16,6 @@ import type { Gender, PlayerProfile } from "../core/types";
 
 const PhaserGame = lazy(() => import("../game/PhaserGame").then((module) => ({ default: module.PhaserGame })));
 
-<<<<<<< Updated upstream
 /**
  * Modal accessibility hook: focus trap + ESC close + focus restoration.
  *
@@ -120,7 +115,14 @@ function useModalA11y<T extends HTMLElement>(
   }, [open]);
 
   return containerRef;
-=======
+}
+
+/**
+ * Pixel-art image renderer. Downsamples the source to `lowRes` × `lowRes` via
+ * canvas, then scales up with `image-rendering: pixelated` so high-res JPGs
+ * (the AI-generated portraits in /assets/characters/) read as pixel art that
+ * matches the in-game sprite style.
+ */
 function PixelImage({
   src,
   lowRes,
@@ -163,7 +165,6 @@ function PixelImage({
       style={{ width, height, imageRendering: "pixelated" }}
     />
   );
->>>>>>> Stashed changes
 }
 
 export function App() {
@@ -322,15 +323,9 @@ function VisionOverlay() {
       onClick={close}
     >
       <div className="vision-frame" onClick={(event) => event.stopPropagation()}>
-<<<<<<< Updated upstream
-        <img src={vision.image} alt="幻象" />
+        <PixelImage src={vision.image} lowRes={96} width={480} height={480} alt="幻象" />
         {vision.caption && <p id={captionId}>{vision.caption}</p>}
         <button type="button" onClick={close}>
-=======
-        <PixelImage src={vision.image} lowRes={96} width={480} height={480} alt="幻象" />
-        {vision.caption && <p>{vision.caption}</p>}
-        <button type="button" onClick={() => setVision(null)}>
->>>>>>> Stashed changes
           闭上眼
         </button>
       </div>
