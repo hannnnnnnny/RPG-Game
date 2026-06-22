@@ -24,8 +24,30 @@ var active_choice: Dictionary = {}
 var vision: Dictionary = {}
 var log: Array[String] = []
 
+# Debounced autosave: any state-changing call resets the timer; when it fires,
+# we flush to disk. Avoids hammering the filesystem mid-combat.
+var _save_timer: Timer
+const SAVE_DEBOUNCE_SECONDS := 1.2
+
 func _ready() -> void:
 	_reset_to_defaults()
+	_save_timer = Timer.new()
+	_save_timer.one_shot = true
+	_save_timer.wait_time = SAVE_DEBOUNCE_SECONDS
+	_save_timer.timeout.connect(_flush_save)
+	add_child(_save_timer)
+
+func _schedule_save() -> void:
+	# Skip until a profile exists (avoids saving the boot-time blank state).
+	if profile.is_empty():
+		return
+	_save_timer.stop()
+	_save_timer.start()
+
+func _flush_save() -> void:
+	if profile.is_empty():
+		return
+	SaveSystem.save()
 
 func _reset_to_defaults() -> void:
 	profile = {}
@@ -50,6 +72,7 @@ func create_profile(new_profile: Dictionary) -> void:
 		"tone": Types.TONE_WHISPER
 	})
 	_log("%s 在黑潮矿区苏醒。" % profile.name)
+	_schedule_save()
 
 func set_combat(new_combat: Dictionary) -> void:
 	combat = new_combat.duplicate(true)
@@ -83,19 +106,22 @@ func add_item(item: Dictionary) -> void:
 	inventory.push_front(item)
 	emit_signal("inventory_changed", inventory)
 	_log("获得装备：%s" % item.name)
+	_schedule_save()
 
 func equip_item(item_id: String) -> void:
 	for item in inventory:
 		if item.id == item_id:
 			equipped[item.slot] = item.id
 			emit_signal("equipped_changed", equipped)
-			_log("装备：%s" % item.name)
+			_log("装备:%s" % item.name)
+			_schedule_save()
 			return
 
 func add_gold(amount: int) -> void:
 	world_state.gold += amount
 	emit_signal("world_state_changed", "gold", world_state.gold)
 	_log("获得 %d 金币。" % amount)
+	_schedule_save()
 
 func request_state_change(request: Dictionary) -> bool:
 	var decision: Dictionary = AidlcRules.approve_state_change(request, world_state)
@@ -110,6 +136,7 @@ func request_state_change(request: Dictionary) -> bool:
 	for effect in request.effects:
 		_set_path(effect.path, effect.value)
 	_log("世界状态变更：%s" % request.type)
+	_schedule_save()
 	return true
 
 func _set_path(path: String, value: Variant) -> void:
@@ -126,6 +153,7 @@ func _set_path(path: String, value: Variant) -> void:
 
 func reset_run() -> void:
 	_reset_to_defaults()
+	SaveSystem.delete_save()
 	emit_signal("profile_changed", profile)
 	emit_signal("world_state_changed", "*", null)
 	emit_signal("combat_changed", combat)

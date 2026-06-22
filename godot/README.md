@@ -81,9 +81,12 @@ TidesOfKhah-Godot/
     │   ├── hud.gd
     │   ├── dialogue_panel.gd
     │   ├── choice_panel.gd
-    │   └── vision_overlay.gd
+    │   ├── vision_overlay.gd
+    │   ├── inventory.gd        # 背包面板
+    │   ├── quest_panel.gd      # 任务面板
+    │   └── event_log.gd        # 日志面板
     └── main/
-        └── character_creator.gd
+        └── character_creator.gd  # 含 continue/new flow
 ```
 
 ## Autoload 单例
@@ -118,10 +121,11 @@ Types.GENDER_FEMALE
 | 对话框 + 克哈头像 | React `DialoguePanel` | Dialogue.tscn | ✅ 等价 |
 | 永久选择 | React `ChoicePanel` | Choice.tscn | ✅ 等价 |
 | 全屏幻象 overlay | React `VisionOverlay` | Vision.tscn | ✅ 等价 |
-| 存档（localStorage） | Zustand persist | `SaveSystem` + `ConfigFile` | ⚠️ 接口写好但未自动触发 |
-| 背包 UI | React `InventoryPanel` | 暂缺 scene | ❌ 待做 |
-| 任务面板 | React `QuestPanel` | 暂缺 | ❌ 待做 |
-| 日志面板 | React `LogPanel` | 暂缺 | ❌ 待做 |
+| 存档（localStorage） | Zustand persist | `SaveSystem` + `ConfigFile` + 防抖触发 | ✅ 等价 |
+| 背包 UI | React `InventoryPanel` | Inventory.tscn 含品质染色边框 | ✅ 等价 |
+| 任务面板 | React `QuestPanel` | Quest.tscn 由 flags 推导 | ✅ 等价 |
+| 日志面板 | React `LogPanel` | EventLog.tscn 显示最近 6 条 | ✅ 等价 |
+| 标题继续/新游戏/重置 | 无（Phaser 版只有创建） | CharacterCreator 检测存档自动切 | ✅ 升级 |
 
 ## 已知限制 / 占位
 
