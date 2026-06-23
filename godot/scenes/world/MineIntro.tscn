@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/mine_intro.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/actors/Player.tscn" id="2"]
@@ -9,9 +9,20 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/Inventory.tscn" id="7"]
 [ext_resource type="PackedScene" path="res://scenes/ui/Quest.tscn" id="8"]
 [ext_resource type="PackedScene" path="res://scenes/ui/EventLog.tscn" id="9"]
+[ext_resource type="Shader" path="res://assets/shaders/dark_atmosphere.gdshader" id="10"]
+[ext_resource type="Script" path="res://scripts/ui/post_process.gd" id="11"]
+
+[sub_resource type="ShaderMaterial" id="PostMat"]
+shader = ExtResource("10")
+shader_parameter/corruption = 0.05
+shader_parameter/desaturation = 0.22
+shader_parameter/vignette_strength = 0.5
 
 [node name="MineIntro" type="Node2D"]
 script = ExtResource("1")
+
+[node name="Ambient" type="CanvasModulate" parent="."]
+color = Color(0.42, 0.37, 0.5, 1)
 
 [node name="Player" parent="." instance=ExtResource("2")]
 position = Vector2(155, 165)
@@ -20,7 +31,19 @@ position = Vector2(155, 165)
 
 [node name="Interactables" type="Node2D" parent="."]
 
+[node name="PostFX" type="CanvasLayer" parent="."]
+layer = 2
+
+[node name="Overlay" type="ColorRect" parent="PostFX"]
+material = SubResource("PostMat")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("11")
+
 [node name="UILayer" type="CanvasLayer" parent="."]
+layer = 10
 
 [node name="Hud" parent="UILayer" instance=ExtResource("3")]
 
