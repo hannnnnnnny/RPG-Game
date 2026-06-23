@@ -168,6 +168,34 @@ Types.GENDER_FEMALE
 3. 在 `scripts/core/` 加 `steam_client.gd`，初始化 + 成就 API
 4. 申请 Steamworks 开发者账号（$100）
 
+## 暗黑氛围系统（"暗黑星露谷"风格）
+
+矿区不再是平铺的色块，而是一座有光影的暗黑洞穴。三层叠加：
+
+**1. 全局压暗（CanvasModulate）**
+- `MineIntro.tscn` 里的 `Ambient` 节点把整张地图乘到约 40% 亮度，并带一点冷紫
+- 注意：CanvasModulate 只影响世界画布，不影响 UI（UI 在独立 CanvasLayer，保持清晰）
+
+**2. 2D 动态光照（PointLight2D）**
+- 玩家身上挂一盏暖色矿灯（`Player.tscn` 的 `TorchLight`），跟着走，照亮周围
+- 图腾残片：紫色脉冲光（呼吸动画）
+- 矿井出口：青绿微光
+- 受伤矮人：暗淡暖光
+- 腐化矮人敌人：幽紫光晕，在黑暗中浮现
+- 所有光共用一张程序生成的径向渐变贴图 `assets/textures/light_soft.tres`（无需图片文件）
+
+**3. 后处理 shader（`assets/shaders/dark_atmosphere.gdshader`）**
+- 铺满屏幕的 `PostFX` 层，读屏做四件事：降饱和 / 暗部染紫 / 暗角 vignette / 污染渗透
+- **污染渗透随 `world_state.corruption` 动态变化**：污染越高，屏幕边缘紫色侵蚀越浓
+  （`post_process.gd` 监听 `world_state_changed` 实时更新 shader uniform）
+
+调参位置：
+- 太暗/太亮 → `MineIntro.tscn` 的 `Ambient.color`
+- 矿灯范围 → `Player.tscn` 的 `TorchLight.texture_scale` / `energy`
+- 褪色/暗角强度 → `MineIntro.tscn` 的 `PostMat` shader 参数
+
+**这一层完全不依赖外部美术资产**。换上真瓦片 / sprite 后，光影系统自动作用在新素材上，效果会更好。
+
 ## Phaser 老项目去哪儿了
 
 留在 `C:\project719A1\RPG-Game\`，**不要删**。作为：

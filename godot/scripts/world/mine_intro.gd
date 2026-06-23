@@ -32,6 +32,8 @@ const PATH_POINTS := [
 	Vector2(680, 630)
 ]
 
+const LIGHT_TEX := preload("res://assets/textures/light_soft.tres")
+
 @onready var player: Player = $Player
 @onready var camera: Camera2D = $Player/Camera2D
 @onready var enemies_root: Node2D = $Enemies
@@ -68,13 +70,26 @@ func _spawn_enemies() -> void:
 		var e: Enemy = EnemyScene.instantiate()
 		e.global_position = pos
 		enemies_root.add_child(e)
+		# Faint purple aura so corrupted dwarves loom out of the dark.
+		var aura := _make_glow(Color(0.55, 0.2, 0.7), 1.0, 0.45)
+		aura.position = Vector2(0, -20)
+		e.add_child(aura)
 
 func _spawn_interactables() -> void:
 	const InteractScene := preload("res://scenes/actors/Interactable.tscn")
 	var configs := [
-		{"type": "injured_dwarf", "pos": Vector2(395, 230), "label": "受伤矮人"},
-		{"type": "totem_fragment", "pos": Vector2(910, 382), "label": "图腾残片"},
-		{"type": "mine_exit", "pos": Vector2(1220, 650), "label": "矿井出口"}
+		{
+			"type": "injured_dwarf", "pos": Vector2(395, 230), "label": "受伤矮人",
+			"glow": Color(1.0, 0.66, 0.45), "scale": 1.5, "energy": 0.55, "pulse": false
+		},
+		{
+			"type": "totem_fragment", "pos": Vector2(910, 382), "label": "图腾残片",
+			"glow": Color(0.7, 0.35, 1.0), "scale": 2.4, "energy": 1.1, "pulse": true
+		},
+		{
+			"type": "mine_exit", "pos": Vector2(1220, 650), "label": "矿井出口",
+			"glow": Color(0.4, 0.86, 0.78), "scale": 2.1, "energy": 0.9, "pulse": false
+		}
 	]
 	for cfg in configs:
 		var n: Interactable = InteractScene.instantiate()
@@ -82,6 +97,24 @@ func _spawn_interactables() -> void:
 		n.label = cfg.label
 		n.global_position = cfg.pos
 		interactables_root.add_child(n)
+		var light := _make_glow(cfg.glow, cfg.scale, cfg.energy)
+		n.add_child(light)
+		if cfg.pulse:
+			_pulse_light(light)
+
+func _make_glow(color: Color, scale: float, energy: float) -> PointLight2D:
+	var light := PointLight2D.new()
+	light.texture = LIGHT_TEX
+	light.color = color
+	light.texture_scale = scale
+	light.energy = energy
+	return light
+
+func _pulse_light(light: PointLight2D) -> void:
+	var base: float = light.energy
+	var tween := create_tween().set_loops()
+	tween.tween_property(light, "energy", base * 1.6, 1.3).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(light, "energy", base, 1.3).set_trans(Tween.TRANS_SINE)
 
 func _classify_tile(col: int, row: int) -> String:
 	var cx := col * TILE_SIZE + TILE_SIZE / 2
