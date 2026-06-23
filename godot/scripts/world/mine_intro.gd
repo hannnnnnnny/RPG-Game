@@ -309,8 +309,12 @@ func _on_player_attack(facing: int, pos: Vector2) -> void:
 
 	_spawn_slash(pos, facing_angle)
 
-	const REACH := 96.0
+	# Reach matches the visible blade arc; cone slightly wider than the
+	# visual so hits feel forgiving. Damage comes from the equipped weapon.
+	const REACH := 70.0
 	const HALF_ARC := PI / 2.4
+	var dmg: int = GameState.get_attack_power()
+	var hit_any := false
 	for e in enemies_root.get_children():
 		if not (e is Enemy): continue
 		var enemy := e as Enemy
@@ -319,7 +323,15 @@ func _on_player_attack(facing: int, pos: Vector2) -> void:
 		var ang: float = to_enemy.angle()
 		var diff: float = wrapf(ang - facing_angle, -PI, PI)
 		if abs(diff) > HALF_ARC: continue
-		enemy.take_damage(18)
+		enemy.take_damage(dmg, pos)
+		hit_any = true
+	# A connected hit gives a tiny camera kick so the swing has weight.
+	if hit_any:
+		var cam := player.get_node_or_null("Camera2D")
+		if cam:
+			cam.offset = Vector2(randf_range(-3, 3), randf_range(-3, 3))
+			var tw := create_tween()
+			tw.tween_property(cam, "offset", Vector2.ZERO, 0.12)
 
 func _spawn_slash(pos: Vector2, facing_angle: float) -> void:
 	var slash := Node2D.new()
