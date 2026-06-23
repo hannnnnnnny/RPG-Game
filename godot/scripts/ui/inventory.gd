@@ -25,9 +25,14 @@ const QUALITY_LABEL := {
 }
 
 func _ready() -> void:
+	visible = false  # 默认隐藏，按 B 呼出
 	GameState.inventory_changed.connect(_refresh)
 	GameState.equipped_changed.connect(_on_equipped_changed)
 	_refresh(GameState.inventory)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("toggle_inventory"):
+		visible = not visible
 
 func _on_equipped_changed(_eq: Dictionary) -> void:
 	_refresh(GameState.inventory)

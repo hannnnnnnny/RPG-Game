@@ -4,8 +4,13 @@ extends Control
 @onready var list_root: VBoxContainer = $Panel/Margin/VBox/List
 
 func _ready() -> void:
+	visible = false  # 默认隐藏，按 L 呼出
 	GameState.log_appended.connect(_on_log_appended)
 	_refresh()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("toggle_log"):
+		visible = not visible
 
 func _on_log_appended(_entry: String) -> void:
 	_refresh()
