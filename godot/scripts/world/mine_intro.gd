@@ -131,8 +131,8 @@ func _classify_tile(col: int, row: int) -> String:
 	if not in_room:
 		return "wall"
 	for p in PUDDLES:
-		var dx := (cx - p.cx) / float(p.rx)
-		var dy := (cy - p.cy) / float(p.ry)
+		var dx: float = (cx - p.cx) / float(p.rx)
+		var dy: float = (cy - p.cy) / float(p.ry)
 		if dx * dx + dy * dy <= 1.0:
 			return "puddle"
 	if _is_path_tile(cx, cy):
@@ -313,12 +313,13 @@ func _on_player_attack(facing: int, pos: Vector2) -> void:
 	const HALF_ARC := PI / 2.4
 	for e in enemies_root.get_children():
 		if not (e is Enemy): continue
-		var to_enemy := e.global_position - pos
+		var enemy := e as Enemy
+		var to_enemy: Vector2 = enemy.global_position - pos
 		if to_enemy.length() > REACH: continue
-		var ang := to_enemy.angle()
-		var diff := wrapf(ang - facing_angle, -PI, PI)
+		var ang: float = to_enemy.angle()
+		var diff: float = wrapf(ang - facing_angle, -PI, PI)
 		if abs(diff) > HALF_ARC: continue
-		e.take_damage(18)
+		enemy.take_damage(18)
 
 func _spawn_slash(pos: Vector2, facing_angle: float) -> void:
 	var slash := Node2D.new()

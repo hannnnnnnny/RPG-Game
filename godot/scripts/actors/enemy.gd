@@ -21,7 +21,7 @@ func _ready() -> void:
 func _find_player() -> void:
 	var players := get_tree().get_nodes_in_group("player")
 	if players.size() > 0:
-		player_ref = players[0]
+		player_ref = players[0] as Player
 
 func _physics_process(delta: float) -> void:
 	if player_ref == null:
