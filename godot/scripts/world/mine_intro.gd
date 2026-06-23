@@ -45,8 +45,11 @@ const LIGHT_TEX := preload("res://assets/textures/light_soft.tres")
 @onready var vision: Control = $UILayer/Vision
 
 var wall_tiles: Array = []  # Array of Rect2 for collision
+var world_tex: ImageTexture  # Baked pixel-art tile map (replaces flat color blocks)
 
 func _ready() -> void:
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_bake_world_texture()
 	_spawn_player_at(Vector2(155, 165))
 	_spawn_enemies()
 	_spawn_interactables()
@@ -180,27 +183,102 @@ func _setup_static_walls() -> void:
 		walls.add_child(shape)
 
 func _draw() -> void:
-	# Draw tile map procedurally
+	if world_tex == null:
+		return
+	# One baked pixel-art texture, scaled up nearest-neighbour (16px src -> 48px on screen).
 	var cols := int(ceil(WORLD_W / float(TILE_SIZE)))
 	var rows := int(ceil(WORLD_H / float(TILE_SIZE)))
+	draw_texture_rect(world_tex, Rect2(0, 0, cols * TILE_SIZE, rows * TILE_SIZE), false)
+
+# ---------- Pixel-art tile baking ----------
+# Each tile is authored at 16px and the whole map is baked into one Image at
+# _ready, then drawn scaled. Detailed per-pixel work (brick seams, cracks,
+# pebbles, ripples) reads as real pixel art instead of flat blocks. This is the
+# port of the Phaser drawTile pass. Drop a real tileset in later by replacing
+# _paint_tile with atlas blits.
+const SRC_TILE := 16
+
+func _bake_world_texture() -> void:
+	var cols := int(ceil(WORLD_W / float(TILE_SIZE)))
+	var rows := int(ceil(WORLD_H / float(TILE_SIZE)))
+	var img := Image.create(cols * SRC_TILE, rows * SRC_TILE, false, Image.FORMAT_RGBA8)
 	for r in range(rows):
 		for c in range(cols):
-			var t := _classify_tile(c, r)
-			var pos := Vector2(c * TILE_SIZE, r * TILE_SIZE)
-			var color: Color
-			match t:
-				"wall":
-					color = Color8(27, 20, 24)
-				"puddle":
-					color = Color8(43, 22, 56)
-				"path":
-					color = Color8(74, 58, 38)
-				_:
-					color = Color8(38, 32, 36)
-			draw_rect(Rect2(pos, Vector2(TILE_SIZE, TILE_SIZE)), color, true)
-			# Edge highlight on floor for subtle 3D feel
-			if t == "floor":
-				draw_rect(Rect2(pos, Vector2(TILE_SIZE, 2)), Color8(53, 42, 50), true)
+			_paint_tile(img, c * SRC_TILE, r * SRC_TILE, _classify_tile(c, r), c, r)
+	world_tex = ImageTexture.create_from_image(img)
+
+func _trand(s: int, n: int) -> float:
+	return fmod(abs(sin(float(s) * float(n + 1))), 1.0)
+
+func _px(img: Image, x: int, y: int, col: Color) -> void:
+	if x >= 0 and y >= 0 and x < img.get_width() and y < img.get_height():
+		img.set_pixel(x, y, col)
+
+func _fillr(img: Image, x: int, y: int, w: int, h: int, col: Color) -> void:
+	# Native fill_rect (C++) — far faster than per-pixel for the bulk fills.
+	img.fill_rect(Rect2i(x, y, w, h), col)
+
+func _paint_tile(img: Image, ox: int, oy: int, type: String, c: int, r: int) -> void:
+	var s := (c * 73856093) ^ (r * 19349663)
+
+	if type == "wall":
+		_fillr(img, ox, oy, 16, 16, Color8(27, 20, 30))
+		# Bevel: lit top-left, shadowed bottom-right -> chunky rock blocks
+		_fillr(img, ox, oy, 16, 2, Color8(44, 31, 54))
+		_fillr(img, ox, oy, 2, 16, Color8(44, 31, 54))
+		_fillr(img, ox, oy + 14, 16, 2, Color8(14, 9, 18))
+		_fillr(img, ox + 14, oy, 2, 16, Color8(14, 9, 18))
+		# Brick seams, offset row to row
+		_fillr(img, ox, oy + 7, 16, 1, Color8(16, 10, 20))
+		if (r % 2) == 0:
+			_fillr(img, ox + 8, oy, 1, 7, Color8(16, 10, 20))
+		else:
+			_fillr(img, ox + 4, oy + 8, 1, 6, Color8(16, 10, 20))
+		# Mineral speckle
+		if _trand(s, 1) < 0.22:
+			_px(img, ox + 4 + int(_trand(s, 2) * 8), oy + 4 + int(_trand(s, 3) * 8), Color8(96, 52, 130))
+		return
+
+	if type == "puddle":
+		_fillr(img, ox, oy, 16, 16, Color8(43, 22, 56))
+		_fillr(img, ox + 2, oy + 3, 5, 1, Color8(61, 29, 78))
+		_fillr(img, ox + 8, oy + 7, 5, 1, Color8(61, 29, 78))
+		_fillr(img, ox + 3, oy + 11, 6, 1, Color8(61, 29, 78))
+		_px(img, ox + 5, oy + 5, Color8(120, 64, 180))
+		_px(img, ox + 11, oy + 10, Color8(120, 64, 180))
+		return
+
+	if type == "path":
+		_fillr(img, ox, oy, 16, 16, Color8(74, 58, 38))
+		for i in range(7):
+			_px(img, ox + int(_trand(s, i + 1) * 16), oy + int(_trand(s, i + 8) * 16), Color8(94, 74, 48))
+		_px(img, ox + 4, oy + 9, Color8(53, 39, 22))
+		_px(img, ox + 11, oy + 3, Color8(53, 39, 22))
+		return
+
+	# floor — cave stone with variation + cracks + pebbles
+	var v := _trand(s, 2)
+	var base := Color8(38, 32, 40)
+	if v >= 0.6 and v < 0.85:
+		base = Color8(45, 37, 47)
+	elif v >= 0.85:
+		base = Color8(33, 27, 36)
+	_fillr(img, ox, oy, 16, 16, base)
+	# Subtle bevel for tiled depth
+	_fillr(img, ox, oy, 16, 1, Color8(53, 43, 57))
+	_fillr(img, ox, oy, 1, 16, Color8(53, 43, 57))
+	_fillr(img, ox, oy + 15, 16, 1, Color8(24, 19, 27))
+	_fillr(img, ox + 15, oy, 1, 16, Color8(24, 19, 27))
+	# Crack
+	if _trand(s, 4) < 0.22:
+		_px(img, ox + 5, oy + 9, Color8(22, 17, 25))
+		_px(img, ox + 6, oy + 10, Color8(22, 17, 25))
+		_px(img, ox + 7, oy + 10, Color8(22, 17, 25))
+	# Pebbles
+	if _trand(s, 3) < 0.2:
+		_px(img, ox + 3 + int(_trand(s, 4) * 9), oy + 3 + int(_trand(s, 5) * 9), Color8(64, 52, 68))
+	if _trand(s, 6) < 0.08:
+		_px(img, ox + 5 + int(_trand(s, 7) * 6), oy + 5 + int(_trand(s, 8) * 6), Color8(122, 90, 132))
 
 func _process(_delta: float) -> void:
 	# Player interaction (E key)
