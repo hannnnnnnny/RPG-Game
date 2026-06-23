@@ -1,6 +1,22 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1"]
+
+[sub_resource type="StyleBoxFlat" id="glass"]
+bg_color = Color(0.05, 0.055, 0.07, 0.55)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.55, 0.45, 0.28, 0.35)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
 
 [node name="Hud" type="Control"]
 anchors_preset = 15
@@ -9,84 +25,89 @@ anchor_bottom = 1.0
 mouse_filter = 2
 script = ExtResource("1")
 
-[node name="Panel" type="Panel" parent="."]
-offset_left = 14.0
-offset_top = 14.0
-offset_right = 220.0
-offset_bottom = 220.0
+[node name="Panel" type="PanelContainer" parent="."]
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 184.0
+offset_bottom = 196.0
+theme_override_styles/panel = SubResource("glass")
 
 [node name="VBox" type="VBoxContainer" parent="Panel"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 8.0
-offset_top = 8.0
-offset_right = -8.0
-offset_bottom = -8.0
-theme_override_constants/separation = 4
+theme_override_constants/separation = 3
 
 [node name="HealthLabel" type="Label" parent="Panel/VBox"]
 text = "生命"
 theme_override_font_sizes/font_size = 12
 
 [node name="HealthBar" type="ProgressBar" parent="Panel/VBox"]
+custom_minimum_size = Vector2(0, 10)
 max_value = 100.0
 value = 100.0
+show_percentage = false
 
 [node name="StaminaLabel" type="Label" parent="Panel/VBox"]
 text = "体力"
 theme_override_font_sizes/font_size = 12
 
 [node name="StaminaBar" type="ProgressBar" parent="Panel/VBox"]
+custom_minimum_size = Vector2(0, 10)
 max_value = 100.0
 value = 100.0
+show_percentage = false
 
 [node name="FocusLabel" type="Label" parent="Panel/VBox"]
 text = "专注"
 theme_override_font_sizes/font_size = 12
 
 [node name="FocusBar" type="ProgressBar" parent="Panel/VBox"]
+custom_minimum_size = Vector2(0, 10)
 max_value = 30.0
 value = 30.0
+show_percentage = false
 
-[node name="CorruptionLabel" type="Label" parent="Panel/VBox"]
+[node name="Stats" type="HBoxContainer" parent="Panel/VBox"]
+theme_override_constants/separation = 10
+
+[node name="CorruptionLabel" type="Label" parent="Panel/VBox/Stats"]
 text = "污染 0"
+theme_override_font_sizes/font_size = 12
 
-[node name="AwakeningLabel" type="Label" parent="Panel/VBox"]
+[node name="AwakeningLabel" type="Label" parent="Panel/VBox/Stats"]
 text = "觉醒 0"
+theme_override_font_sizes/font_size = 12
 
 [node name="GoldLabel" type="Label" parent="Panel/VBox"]
 text = "0 金币"
+theme_override_colors/font_color = Color(0.85, 0.71, 0.38, 1)
+theme_override_font_sizes/font_size = 12
 
-[node name="DisiAvatar" type="Panel" parent="."]
+[node name="DisiAvatar" type="PanelContainer" parent="."]
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -260.0
-offset_top = 14.0
-offset_right = -14.0
-offset_bottom = 110.0
+offset_left = -236.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = 96.0
 grow_horizontal = 0
+theme_override_styles/panel = SubResource("glass")
 
-[node name="Portrait" type="TextureRect" parent="DisiAvatar"]
-offset_left = 8.0
-offset_top = 8.0
-offset_right = 80.0
-offset_bottom = 80.0
+[node name="HBox" type="HBoxContainer" parent="DisiAvatar"]
+theme_override_constants/separation = 8
+
+[node name="Portrait" type="TextureRect" parent="DisiAvatar/HBox"]
+custom_minimum_size = Vector2(64, 64)
 expand_mode = 1
 stretch_mode = 6
 
-[node name="VBox" type="VBoxContainer" parent="DisiAvatar"]
-offset_left = 92.0
-offset_top = 14.0
-offset_right = 240.0
-offset_bottom = 86.0
+[node name="VBox" type="VBoxContainer" parent="DisiAvatar/HBox"]
+size_flags_vertical = 1
 theme_override_constants/separation = 4
 
-[node name="Name" type="Label" parent="DisiAvatar/VBox"]
+[node name="Name" type="Label" parent="DisiAvatar/HBox/VBox"]
 text = "disi"
 theme_override_colors/font_color = Color(0.85, 0.71, 0.38, 1)
 
-[node name="Status" type="Label" parent="DisiAvatar/VBox"]
+[node name="Status" type="Label" parent="DisiAvatar/HBox/VBox"]
 text = "污染 0 · 神志清明"
 theme_override_colors/font_color = Color(0.7, 0.66, 0.59, 1)
 theme_override_font_sizes/font_size = 12
