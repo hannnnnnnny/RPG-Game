@@ -15,9 +15,10 @@ func _draw() -> void:
 	var t: float = clamp(elapsed / DURATION, 0.0, 1.0)
 	# Crescent arc — sweep angle range expands then fades
 	var center := Vector2.ZERO
-	var r_outer := 64.0
-	var r_inner := 48.0
-	var half_arc: float = PI / 2.4
+	# Tighter blade arc, aligned with the melee REACH in mine_intro (~64px).
+	var r_outer := 48.0
+	var r_inner := 30.0
+	var half_arc: float = PI / 2.6
 
 	# Determine visible arc range based on t (Stardew-style sweep)
 	var seg_start: float

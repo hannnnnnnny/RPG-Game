@@ -123,6 +123,23 @@ func add_gold(amount: int) -> void:
 	_log("获得 %d 金币。" % amount)
 	_schedule_save()
 
+# 玩家近战攻击力：空手基础 8，装备主手武器时加上其 attack 类词条之和。
+# 例：空手 8 → 打 20 血怪需 3 下，不秒杀。装好武器后更高。
+const BASE_ATTACK := 8
+
+func get_attack_power() -> int:
+	var weapon_id: String = equipped.get(Types.SLOT_MAIN_HAND, "")
+	if weapon_id == "":
+		return BASE_ATTACK
+	for item in inventory:
+		if item.id == weapon_id:
+			var bonus := 0
+			for affix in item.affixes:
+				if affix.category == Types.AFFIX_ATTACK:
+					bonus += int(affix.value)
+			return BASE_ATTACK + bonus
+	return BASE_ATTACK
+
 func request_state_change(request: Dictionary) -> bool:
 	var decision: Dictionary = AidlcRules.approve_state_change(request, world_state)
 	if not decision.approved:
