@@ -19,5 +19,7 @@ skills-lock.json
 godot/.godot/
 godot/*.import
 godot/.import/
-godot/export_presets.cfg
 godot/.gdignore
+
+# Build output (exported binaries — too big for git, rebuilt on demand)
+dist/

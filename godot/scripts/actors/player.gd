@@ -158,12 +158,12 @@ func _build_frames(sheet: Texture2D) -> SpriteFrames:
 	var groups := {"down": 0, "up": 3, "side": 6}
 	for d in groups:
 		var base: int = groups[d]
-		var idle_name := "idle_" + d
+		var idle_name: String = "idle_" + str(d)
 		sf.add_animation(idle_name)
 		sf.set_animation_loop(idle_name, true)
 		sf.set_animation_speed(idle_name, 1.0)
 		sf.add_frame(idle_name, _atlas(sheet, base))
-		var walk_name := "walk_" + d
+		var walk_name: String = "walk_" + str(d)
 		sf.add_animation(walk_name)
 		sf.set_animation_loop(walk_name, true)
 		sf.set_animation_speed(walk_name, 8.0)
