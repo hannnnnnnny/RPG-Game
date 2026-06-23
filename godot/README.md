@@ -111,7 +111,7 @@ Types.GENDER_FEMALE
 | 全局状态 | Zustand `useGameStore` | autoload `GameState` | ✅ 等价 |
 | AIDLC 审批 | `aidlcRules.ts` | `aidlc_rules.gd` | ✅ 等价 |
 | 装备生成 | `lootGenerator.ts` | `loot_generator.gd` | ✅ 等价 |
-| 玩家移动 + 4 方向 sprite | Phaser sprite + anims | CharacterBody2D + `_draw()` 占位 | ✅ 占位完成 |
+| 玩家移动 + 4 方向 sprite | Phaser sprite + anims | CharacterBody2D + AnimatedSprite2D（烘焙 chibi sheet，idle/walk 动画） | ✅ 等价 |
 | 程序化瓦片地图 | Phaser Graphics + canvas | Node2D `_draw()` | ✅ 等价 |
 | 墙体碰撞 | Phaser StaticGroup | StaticBody2D + CollisionShape2D | ✅ 等价 |
 | 挥剑动画 | Phaser AnimatedSprite | `slash.gd` 时序绘制 | ✅ 等价 |
@@ -129,10 +129,12 @@ Types.GENDER_FEMALE
 
 ## 已知限制 / 占位
 
-1. **玩家 sprite 是 GDScript 程序化绘制**（draw_rect 拼像素），效果跟原 Phaser 版的占位 sprite 相当。**这是临时方案**，建议尽快用 PixelLab 出 4 方向 PNG 替换：
-   - 替换方法：把 4 张 PNG 拖进 `assets/sprites/disi/`，编辑器里改 Player.tscn 根节点 → 把脚本里的 `_draw()` 删掉，改成调 `$AnimatedSprite2D.play()`
-2. **敌人 / 受伤矮人 / 图腾 / 出口** 也是程序化绘制占位，同样可替换
-3. **没有真正的瓦片资产**，矿区背景是 `_draw` 画的色块。Week 3-4 切到 Tiled 编辑器 + Godot TileMap 资源
+1. **玩家 disi 是程序化烘焙的 chibi sprite**（18×32，4 方向 × 3 帧走路循环，含描边/三层明暗/头发/紫袍/靴），跑 `AnimatedSprite2D` 真动画（idle/walk × down/up/side，左向用 flip_h）。**渲染管线已就位**，换真 sprite 只需：
+   - 把一张 sprite sheet PNG 拖进 `assets/sprites/disi/`
+   - `player.gd` 的 `_ready` 里把 `_bake_player_sheet()` 换成 `load("res://assets/sprites/disi/xxx.png")`
+   - 保证帧布局 9 帧（down 0-2 / up 3-5 / side 6-8），或调 `_build_frames` 索引
+2. **敌人 / 受伤矮人 / 图腾 / 出口** 仍是程序化 `_draw` 占位，同样可替换
+3. **瓦片是程序化烘焙的像素艺术**（`_bake_world_texture` 在 _ready 把每块 16px 瓦片画进一张 Image，含砖缝/裂纹/卵石/水波纹，再 nearest 放大）。比纯色块好很多，但仍非手绘资产。下一步可下 Mystic Woods / Kenney Tiny Dungeon 等 tileset，把 `_paint_tile` 换成 atlas 贴图即可
 4. **没有音效**：第二版补
 5. **存档自动触发未接** —— `SaveSystem.save()` 函数写好了但还没在关键事件后调。需要在 game_state.gd 里加 `_log()` 时同步触发，或者用 Timer 定时存
 6. **没有背包/任务/日志面板**：第二版补

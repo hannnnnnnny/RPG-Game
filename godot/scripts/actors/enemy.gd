@@ -2,17 +2,22 @@
 class_name Enemy
 extends CharacterBody2D
 
-@export var hp: float = 32.0
+@export var hp: float = 20.0          # hidden HP — no bar; multi-hit feedback conveys it
 @export var detect_range: float = 280.0
 @export var attack_range: float = 34.0
 @export var attack_cooldown: float = 0.85
 @export var move_speed: float = 62.0
 @export var contact_damage: float = 8.0
 
+const KNOCKBACK_FORCE := 190.0
+const KNOCKBACK_DECAY := 620.0
+
 var attack_timer: float = 0.0
 var anim_time: float = 0.0
 var anim_frame: int = 0
 var player_ref: Player = null
+var knockback: Vector2 = Vector2.ZERO
+var _dying: bool = false
 
 func _ready() -> void:
 	add_to_group("enemy")
@@ -21,7 +26,7 @@ func _ready() -> void:
 func _find_player() -> void:
 	var players := get_tree().get_nodes_in_group("player")
 	if players.size() > 0:
-		player_ref = players[0]
+		player_ref = players[0] as Player
 
 func _physics_process(delta: float) -> void:
 	if player_ref == null:
@@ -37,29 +42,55 @@ func _physics_process(delta: float) -> void:
 
 	var to_player := player_ref.global_position - global_position
 	var dist := to_player.length()
+	var chase := Vector2.ZERO
 	if dist < detect_range:
-		velocity = to_player.normalized() * move_speed
-	else:
-		velocity = Vector2.ZERO
+		chase = to_player.normalized() * move_speed
+	# Knockback decays toward zero; it adds onto the chase so a hit visibly
+	# shoves the enemy back even while it's pursuing.
+	knockback = knockback.move_toward(Vector2.ZERO, KNOCKBACK_DECAY * delta)
+	velocity = chase + knockback
 	move_and_slide()
 
 	if dist < attack_range and attack_timer <= 0.0:
 		attack_timer = attack_cooldown
 		player_ref.take_damage(contact_damage)
 
-func take_damage(amount: float) -> void:
+func take_damage(amount: float, from_pos: Vector2 = global_position) -> void:
+	if _dying:
+		return
 	hp -= amount
-	modulate = Color(0.9, 0.7, 0.9)
-	await get_tree().create_timer(0.08).timeout
-	modulate = Color.WHITE
+	# Shove away from the hit origin.
+	var dir := (global_position - from_pos)
+	if dir.length() < 0.01:
+		dir = Vector2.RIGHT
+	knockback = dir.normalized() * KNOCKBACK_FORCE
+	_flash_hit()
 	if hp <= 0.0:
 		_die()
 
+func _flash_hit() -> void:
+	# Overbright white flash + squash punch — reads clearly even at range
+	# in the dark purple scene.
+	modulate = Color(2.6, 2.6, 2.8)
+	scale = Vector2(1.2, 0.84)
+	var tw := create_tween().set_parallel(true)
+	tw.tween_property(self, "modulate", Color.WHITE, 0.14)
+	tw.tween_property(self, "scale", Vector2.ONE, 0.14).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
 func _die() -> void:
+	if _dying:
+		return
+	_dying = true
+	set_physics_process(false)
 	var world_tier: int = GameState.world_state.world_tier
 	GameState.add_gold(LootGenerator.gold_for_kill("enemy", world_tier))
 	if randf() > 0.36:
 		GameState.add_item(LootGenerator.generate_loot("enemy", world_tier))
+	# Quick death pop before removal.
+	var tw := create_tween().set_parallel(true)
+	tw.tween_property(self, "modulate:a", 0.0, 0.18)
+	tw.tween_property(self, "scale", Vector2(0.5, 0.5), 0.18)
+	await tw.finished
 	queue_free()
 
 # === Placeholder pixel art: hooded corrupted dwarf ===

@@ -4,8 +4,13 @@ extends Control
 @onready var list_root: VBoxContainer = $Panel/Margin/VBox/List
 
 func _ready() -> void:
+	visible = false  # 默认隐藏，按 M 呼出
 	GameState.world_state_changed.connect(_on_world_changed)
 	_refresh()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("toggle_quest"):
+		visible = not visible
 
 func _on_world_changed(_path: String, _value: Variant) -> void:
 	_refresh()
