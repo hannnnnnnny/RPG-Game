@@ -132,7 +132,7 @@ Types.GENDER_FEMALE
 1. **玩家 sprite 是 GDScript 程序化绘制**（draw_rect 拼像素），效果跟原 Phaser 版的占位 sprite 相当。**这是临时方案**，建议尽快用 PixelLab 出 4 方向 PNG 替换：
    - 替换方法：把 4 张 PNG 拖进 `assets/sprites/disi/`，编辑器里改 Player.tscn 根节点 → 把脚本里的 `_draw()` 删掉，改成调 `$AnimatedSprite2D.play()`
 2. **敌人 / 受伤矮人 / 图腾 / 出口** 也是程序化绘制占位，同样可替换
-3. **没有真正的瓦片资产**，矿区背景是 `_draw` 画的色块。Week 3-4 切到 Tiled 编辑器 + Godot TileMap 资源
+3. **瓦片是程序化烘焙的像素艺术**（`_bake_world_texture` 在 _ready 把每块 16px 瓦片画进一张 Image，含砖缝/裂纹/卵石/水波纹，再 nearest 放大）。比纯色块好很多，但仍非手绘资产。下一步可下 Mystic Woods / Kenney Tiny Dungeon 等 tileset，把 `_paint_tile` 换成 atlas 贴图即可
 4. **没有音效**：第二版补
 5. **存档自动触发未接** —— `SaveSystem.save()` 函数写好了但还没在关键事件后调。需要在 game_state.gd 里加 `_log()` 时同步触发，或者用 Timer 定时存
 6. **没有背包/任务/日志面板**：第二版补
