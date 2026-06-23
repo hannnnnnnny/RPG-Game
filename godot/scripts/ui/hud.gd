@@ -4,12 +4,12 @@ extends Control
 @onready var health_bar: ProgressBar = $Panel/VBox/HealthBar
 @onready var stamina_bar: ProgressBar = $Panel/VBox/StaminaBar
 @onready var focus_bar: ProgressBar = $Panel/VBox/FocusBar
-@onready var corruption_label: Label = $Panel/VBox/CorruptionLabel
-@onready var awakening_label: Label = $Panel/VBox/AwakeningLabel
+@onready var corruption_label: Label = $Panel/VBox/Stats/CorruptionLabel
+@onready var awakening_label: Label = $Panel/VBox/Stats/AwakeningLabel
 @onready var gold_label: Label = $Panel/VBox/GoldLabel
-@onready var disi_portrait: TextureRect = $DisiAvatar/Portrait
-@onready var disi_name: Label = $DisiAvatar/VBox/Name
-@onready var disi_status: Label = $DisiAvatar/VBox/Status
+@onready var disi_portrait: TextureRect = $DisiAvatar/HBox/Portrait
+@onready var disi_name: Label = $DisiAvatar/HBox/VBox/Name
+@onready var disi_status: Label = $DisiAvatar/HBox/VBox/Status
 
 const DISI_STAGE1 := preload("res://assets/characters/disi_stage1.jpg")
 const DISI_STAGE2 := preload("res://assets/characters/disi_stage2.jpg")

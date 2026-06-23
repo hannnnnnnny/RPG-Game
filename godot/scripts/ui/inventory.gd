@@ -3,8 +3,8 @@
 ## 监听 GameState.inventory_changed 和 equipped_changed 自动刷新。
 extends Control
 
-@onready var list_root: VBoxContainer = $Panel/Margin/Scroll/ItemList
-@onready var empty_label: Label = $Panel/Margin/Empty
+@onready var list_root: VBoxContainer = $Panel/Margin/VBox/Scroll/ItemList
+@onready var empty_label: Label = $Panel/Margin/VBox/Empty
 
 const QUALITY_COLOR := {
 	"broken": Color(0.55, 0.52, 0.46),
