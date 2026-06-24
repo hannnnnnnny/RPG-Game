@@ -22,19 +22,23 @@ func _refresh() -> void:
 	var flags: Dictionary = GameState.world_state.flags
 	var objectives: Array[String] = []
 
-	objectives.append("逃出黑潮矿区")
+	var escaped: bool = flags.get("escaped_mine", false)
+	var touched: bool = flags.get("touched_totem_fragment", false)
+	var beat_grom: bool = flags.get("defeated_grom", false)
 
-	if str(flags.get("first_dwarf_choice", "")) == "":
-		objectives.append("处理受伤矮人的命运")
-
-	if not flags.get("touched_totem_fragment", false):
-		objectives.append("触碰图腾残片")
-
-	if flags.get("touched_totem_fragment", false) and not flags.get("escaped_mine", false):
-		objectives.append("前往矿井出口")
-
-	if flags.get("escaped_mine", false):
-		objectives.append("灰灯镇的路还在雾里")
+	if not escaped:
+		objectives.append("逃出黑潮矿区")
+		if str(flags.get("first_dwarf_choice", "")) == "":
+			objectives.append("处理受伤矮人的命运")
+		if not touched:
+			objectives.append("触碰图腾残片")
+		if touched and not beat_grom:
+			objectives.append("击败黑腕队长·格罗姆")
+		if beat_grom and not escaped:
+			objectives.append("前往矿井出口")
+	else:
+		objectives.append("灰灯镇：与镇民交谈")
+		objectives.append("灰灯镇的秘密还在雾里（下一版）")
 
 	for obj in objectives:
 		var label := Label.new()

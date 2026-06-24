@@ -324,6 +324,13 @@ func _on_world_changed(path: String, value: Variant) -> void:
 	# Choosing to save the injured dwarf — he gets up and follows you.
 	if path == "flags.first_dwarf_choice" and value == "save":
 		_spawn_follower()
+	# Escaping the mine transitions to 灰灯镇 after a beat.
+	if path == "flags.escaped_mine" and value == true:
+		_go_to_town()
+
+func _go_to_town() -> void:
+	await get_tree().create_timer(2.2).timeout
+	get_tree().change_scene_to_file("res://scenes/world/TownAshlight.tscn")
 
 func _spawn_follower() -> void:
 	if follower != null and is_instance_valid(follower):
