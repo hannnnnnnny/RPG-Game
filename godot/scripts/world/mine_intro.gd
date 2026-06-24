@@ -369,15 +369,9 @@ func _on_boss_died() -> void:
 		"tone": Types.TONE_WHISPER
 	})
 
-func _on_player_attack(facing: int, pos: Vector2) -> void:
-	# Slash effect — directional cone hit
-	var facing_angle: float
-	match facing:
-		Player.Facing.DOWN: facing_angle = PI / 2
-		Player.Facing.UP: facing_angle = -PI / 2
-		Player.Facing.LEFT: facing_angle = PI
-		Player.Facing.RIGHT: facing_angle = 0
-		_: facing_angle = PI / 2
+func _on_player_attack(aim_angle: float, pos: Vector2) -> void:
+	# Free-aim cone hit — direction comes straight from the mouse aim.
+	var facing_angle: float = aim_angle
 
 	_spawn_slash(pos, facing_angle)
 

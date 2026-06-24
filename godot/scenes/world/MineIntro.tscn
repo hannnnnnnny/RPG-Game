@@ -70,7 +70,7 @@ offset_top = -28.0
 offset_right = 420.0
 offset_bottom = -8.0
 grow_vertical = 0
-text = "B 背包   M 任务   L 日志   J 攻击   空格 翻滚   E 互动"
+text = "WASD 移动  Shift 奔跑  左键/J 攻击(朝鼠标)  空格 翻滚  E 互动  B/M/L 面板"
 theme_override_colors/font_color = Color(0.62, 0.58, 0.5, 1)
 theme_override_font_sizes/font_size = 12
 
