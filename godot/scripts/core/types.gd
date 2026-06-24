@@ -51,6 +51,7 @@ static func make_default_world_state() -> Dictionary:
 			"met_injured_dwarf": false,
 			"first_dwarf_choice": "",
 			"touched_totem_fragment": false,
+			"defeated_grom": false,
 			"escaped_mine": false
 		}
 	}
