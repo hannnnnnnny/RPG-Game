@@ -24,6 +24,21 @@ var active_choice: Dictionary = {}
 var vision: Dictionary = {}
 var log: Array[String] = []
 
+# Transient (not saved): where the player should appear after a scene change,
+# e.g. back at a building's door after leaving its interior.
+var spawn_override: Vector2 = Vector2.ZERO
+var has_spawn_override: bool = false
+
+func set_spawn_override(pos: Vector2) -> void:
+	spawn_override = pos
+	has_spawn_override = true
+
+func consume_spawn_override(default_pos: Vector2) -> Vector2:
+	if has_spawn_override:
+		has_spawn_override = false
+		return spawn_override
+	return default_pos
+
 # Debounced autosave: any state-changing call resets the timer; when it fires,
 # we flush to disk. Avoids hammering the filesystem mid-combat.
 var _save_timer: Timer
@@ -123,6 +138,29 @@ func add_gold(amount: int) -> void:
 	emit_signal("world_state_changed", "gold", world_state.gold)
 	_log("获得 %d 金币。" % amount)
 	_schedule_save()
+
+# Spend gold if affordable; returns success.
+func spend_gold(amount: int) -> bool:
+	if world_state.gold < amount:
+		return false
+	world_state.gold -= amount
+	emit_signal("world_state_changed", "gold", world_state.gold)
+	_schedule_save()
+	return true
+
+# Remove an item by id (also unequips it if equipped).
+func remove_item(item_id: String) -> Dictionary:
+	for i in range(inventory.size()):
+		if inventory[i].id == item_id:
+			var item: Dictionary = inventory[i]
+			inventory.remove_at(i)
+			if equipped.get(item.slot, "") == item_id:
+				equipped.erase(item.slot)
+				emit_signal("equipped_changed", equipped)
+			emit_signal("inventory_changed", inventory)
+			_schedule_save()
+			return item
+	return {}
 
 # 玩家近战攻击力：空手基础 8，装备主手武器时加上其 attack 类词条之和。
 # 例：空手 8 → 打 20 血怪需 3 下，不秒杀。装好武器后更高。
