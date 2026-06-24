@@ -49,6 +49,7 @@ var wall_tiles: Array = []  # Array of Rect2 for collision
 var world_tex: ImageTexture  # Baked pixel-art tile map (replaces flat color blocks)
 var boss: Boss = null
 var _boss_spawned: bool = false
+var follower: Follower = null
 
 func _ready() -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -62,6 +63,10 @@ func _ready() -> void:
 	player.attack_performed.connect(_on_player_attack)
 	GameState.world_state_changed.connect(_on_world_changed)
 	Audio.start_ambient()
+
+	# On reload: if the dwarf was already rescued, he's still tagging along.
+	if GameState.world_state.flags.get("first_dwarf_choice", "") == "save":
+		_spawn_follower()
 
 	GameState.set_dialogue({
 		"speaker": "克哈低语",
@@ -316,6 +321,25 @@ func _on_world_changed(path: String, value: Variant) -> void:
 	# his corrupted form as the boss, guarding the exit.
 	if path == "flags.touched_totem_fragment" and value == true and not _boss_spawned:
 		_spawn_boss()
+	# Choosing to save the injured dwarf — he gets up and follows you.
+	if path == "flags.first_dwarf_choice" and value == "save":
+		_spawn_follower()
+
+func _spawn_follower() -> void:
+	if follower != null and is_instance_valid(follower):
+		return
+	const FollowerScene := preload("res://scenes/actors/Follower.tscn")
+	follower = FollowerScene.instantiate()
+	# Start where the dwarf was lying, just behind the player.
+	follower.global_position = Vector2(395, 230)
+	add_child(follower)
+	var glow := _make_glow(Color(1.0, 0.7, 0.45), 1.2, 0.5)
+	glow.position = Vector2(0, -14)
+	follower.add_child(glow)
+	# Remove the lying-dwarf interactable so he isn't in two places at once.
+	for n in interactables_root.get_children():
+		if n is Interactable and n.interact_type == "injured_dwarf":
+			n.queue_free()
 
 func _spawn_boss() -> void:
 	_boss_spawned = true
