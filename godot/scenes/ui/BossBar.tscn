@@ -1,0 +1,59 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/boss_bar.gd" id="1"]
+
+[sub_resource type="StyleBoxFlat" id="glass"]
+bg_color = Color(0.06, 0.04, 0.07, 0.7)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.6, 0.3, 0.45, 0.5)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxFlat" id="boss_fill"]
+bg_color = Color(0.72, 0.18, 0.32, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[node name="BossBar" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("1")
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -260.0
+offset_top = 18.0
+offset_right = 260.0
+offset_bottom = 70.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("glass")
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+theme_override_constants/separation = 4
+
+[node name="Name" type="Label" parent="Panel/VBox"]
+text = "黑腕队长·格罗姆"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.88, 0.6, 0.66, 1)
+theme_override_font_sizes/font_size = 15
+
+[node name="Bar" type="ProgressBar" parent="Panel/VBox"]
+custom_minimum_size = Vector2(0, 14)
+max_value = 160.0
+value = 160.0
+show_percentage = false
+theme_override_styles/fill = SubResource("boss_fill")

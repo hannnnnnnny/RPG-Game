@@ -4,6 +4,7 @@ extends Node
 const ALLOWED_FIRST_SCENE_CHANGES := [
 	"record_first_choice",
 	"touch_totem_fragment",
+	"defeat_grom",
 	"escape_mine",
 	"khah_whisper"
 ]
@@ -19,6 +20,12 @@ func approve_state_change(request: Dictionary, world_state: Dictionary) -> Dicti
 		return {
 			"approved": false,
 			"reason": "玩家还没有触碰图腾残片，矿井出口的黑潮不会退让。"
+		}
+
+	if request.type == "escape_mine" and not world_state.flags.defeated_grom:
+		return {
+			"approved": false,
+			"reason": "黑腕队长·格罗姆挡在出口前。先击败他。"
 		}
 
 	if request.type == "escape_mine" and world_state.flags.escaped_mine:
