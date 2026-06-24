@@ -57,6 +57,7 @@ func _ready() -> void:
 	_setup_static_walls()
 
 	player.attack_performed.connect(_on_player_attack)
+	Audio.start_ambient()
 
 	GameState.set_dialogue({
 		"speaker": "克哈低语",
@@ -222,21 +223,28 @@ func _paint_tile(img: Image, ox: int, oy: int, type: String, c: int, r: int) -> 
 	var s := (c * 73856093) ^ (r * 19349663)
 
 	if type == "wall":
-		_fillr(img, ox, oy, 16, 16, Color8(27, 20, 30))
-		# Bevel: lit top-left, shadowed bottom-right -> chunky rock blocks
-		_fillr(img, ox, oy, 16, 2, Color8(44, 31, 54))
-		_fillr(img, ox, oy, 2, 16, Color8(44, 31, 54))
-		_fillr(img, ox, oy + 14, 16, 2, Color8(14, 9, 18))
-		_fillr(img, ox + 14, oy, 2, 16, Color8(14, 9, 18))
-		# Brick seams, offset row to row
-		_fillr(img, ox, oy + 7, 16, 1, Color8(16, 10, 20))
+		# Lighter rock base so walls read as solid stone (not void) under the
+		# dark CanvasModulate. Two-block brick pattern with a lit top lip.
+		_fillr(img, ox, oy, 16, 16, Color8(52, 42, 60))
+		# Top lip catches the dim ambient — sells stacked stone depth.
+		_fillr(img, ox, oy, 16, 2, Color8(78, 62, 92))
+		_fillr(img, ox, oy, 2, 16, Color8(66, 52, 78))
+		# Bottom/right shadow recess.
+		_fillr(img, ox, oy + 14, 16, 2, Color8(26, 18, 32))
+		_fillr(img, ox + 14, oy, 2, 16, Color8(30, 22, 36))
+		# Mortar seams, offset row to row -> brickwork.
+		_fillr(img, ox, oy + 7, 16, 1, Color8(28, 20, 34))
 		if (r % 2) == 0:
-			_fillr(img, ox + 8, oy, 1, 7, Color8(16, 10, 20))
+			_fillr(img, ox + 8, oy, 1, 7, Color8(28, 20, 34))
+			_fillr(img, ox + 4, oy + 8, 1, 6, Color8(28, 20, 34))
 		else:
-			_fillr(img, ox + 4, oy + 8, 1, 6, Color8(16, 10, 20))
-		# Mineral speckle
-		if _trand(s, 1) < 0.22:
-			_px(img, ox + 4 + int(_trand(s, 2) * 8), oy + 4 + int(_trand(s, 3) * 8), Color8(96, 52, 130))
+			_fillr(img, ox + 4, oy, 1, 7, Color8(28, 20, 34))
+			_fillr(img, ox + 11, oy + 8, 1, 6, Color8(28, 20, 34))
+		# Mineral speckle glint.
+		if _trand(s, 1) < 0.26:
+			_px(img, ox + 4 + int(_trand(s, 2) * 8), oy + 4 + int(_trand(s, 3) * 8), Color8(124, 70, 160))
+		if _trand(s, 4) < 0.12:
+			_px(img, ox + 3 + int(_trand(s, 5) * 9), oy + 3 + int(_trand(s, 6) * 9), Color8(92, 78, 104))
 		return
 
 	if type == "puddle":
@@ -324,14 +332,42 @@ func _on_player_attack(facing: int, pos: Vector2) -> void:
 		var diff: float = wrapf(ang - facing_angle, -PI, PI)
 		if abs(diff) > HALF_ARC: continue
 		enemy.take_damage(dmg, pos)
+		_spawn_damage_number(enemy.global_position, dmg)
 		hit_any = true
-	# A connected hit gives a tiny camera kick so the swing has weight.
+	# A connected hit gives a tiny camera kick + brief hitstop so the swing
+	# has weight.
 	if hit_any:
 		var cam := player.get_node_or_null("Camera2D")
 		if cam:
 			cam.offset = Vector2(randf_range(-3, 3), randf_range(-3, 3))
 			var tw := create_tween()
 			tw.tween_property(cam, "offset", Vector2.ZERO, 0.12)
+		_hitstop()
+
+# Brief time freeze on a connected hit — the classic "crunch" of melee.
+func _hitstop(duration: float = 0.06) -> void:
+	if Engine.time_scale < 1.0:
+		return
+	Engine.time_scale = 0.05
+	# ignore_time_scale=true so the timer fires in real time despite the freeze.
+	await get_tree().create_timer(duration, true, false, true).timeout
+	Engine.time_scale = 1.0
+
+# Floating damage number that rises and fades.
+func _spawn_damage_number(at: Vector2, amount: int) -> void:
+	var lbl := Label.new()
+	lbl.text = str(amount)
+	lbl.position = at + Vector2(randf_range(-8, 8), -34)
+	lbl.z_index = 50
+	lbl.add_theme_color_override("font_color", Color(1.0, 0.95, 0.72))
+	lbl.add_theme_color_override("font_outline_color", Color(0.1, 0.05, 0.05))
+	lbl.add_theme_constant_override("outline_size", 4)
+	lbl.add_theme_font_size_override("font_size", 18)
+	add_child(lbl)
+	var tw := create_tween()
+	tw.tween_property(lbl, "position:y", lbl.position.y - 28, 0.5).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(lbl, "modulate:a", 0.0, 0.5).set_delay(0.12)
+	tw.chain().tween_callback(lbl.queue_free)
 
 func _spawn_slash(pos: Vector2, facing_angle: float) -> void:
 	var slash := Node2D.new()

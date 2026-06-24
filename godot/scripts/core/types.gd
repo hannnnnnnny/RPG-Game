@@ -64,3 +64,22 @@ static func make_default_combat() -> Dictionary:
 		"focus": 30,
 		"max_focus": 30
 	}
+
+## Downsample a (hi-res, painted) texture to low_res px and return it as an
+## ImageTexture. Shown with nearest filtering it reads as pixel art, so the AI
+## portraits stop clashing with the pixel world.
+static func pixelate(src: Texture2D, low_res: int) -> ImageTexture:
+	if src == null:
+		return null
+	var img := src.get_image()
+	if img == null:
+		return null
+	img = img.duplicate()
+	var w := img.get_width()
+	var h := img.get_height()
+	var longest := maxi(w, h)
+	if longest <= 0:
+		return null
+	var s := float(low_res) / float(longest)
+	img.resize(maxi(1, int(w * s)), maxi(1, int(h * s)), Image.INTERPOLATE_NEAREST)
+	return ImageTexture.create_from_image(img)

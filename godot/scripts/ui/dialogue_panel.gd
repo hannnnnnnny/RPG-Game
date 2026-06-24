@@ -8,8 +8,11 @@ extends Control
 
 const KHAH_PORTRAIT := preload("res://assets/characters/khah.jpg")
 
+var _px_khah: Texture2D
+
 func _ready() -> void:
 	visible = false
+	_px_khah = Types.pixelate(KHAH_PORTRAIT, 64)
 	GameState.dialogue_opened.connect(_on_dialogue_opened)
 	GameState.dialogue_closed.connect(_on_dialogue_closed)
 	close_button.pressed.connect(GameState.close_dialogue)
@@ -19,7 +22,7 @@ func _on_dialogue_opened(speaker: String, text: String, tone: String) -> void:
 	text_label.text = text
 	# Show Khah portrait when speaker is 克哈低语
 	if speaker == "克哈低语":
-		portrait.texture = KHAH_PORTRAIT
+		portrait.texture = _px_khah
 		portrait.visible = true
 	else:
 		portrait.visible = false

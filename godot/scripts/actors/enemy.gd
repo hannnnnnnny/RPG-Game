@@ -18,6 +18,9 @@ var anim_frame: int = 0
 var player_ref: Player = null
 var knockback: Vector2 = Vector2.ZERO
 var _dying: bool = false
+var aggro: bool = false
+var wander_dir: Vector2 = Vector2.ZERO
+var wander_timer: float = 0.0
 
 func _ready() -> void:
 	add_to_group("enemy")
@@ -42,18 +45,46 @@ func _physics_process(delta: float) -> void:
 
 	var to_player := player_ref.global_position - global_position
 	var dist := to_player.length()
-	var chase := Vector2.ZERO
+	var move := Vector2.ZERO
 	if dist < detect_range:
-		chase = to_player.normalized() * move_speed
-	# Knockback decays toward zero; it adds onto the chase so a hit visibly
+		# Spotted the player — telegraph the first time, then pursue.
+		if not aggro:
+			aggro = true
+			_telegraph()
+		move = to_player.normalized() * move_speed
+	else:
+		# Out of range: drift idly so the room feels alive instead of frozen.
+		if aggro:
+			aggro = false
+		_wander(delta)
+		move = wander_dir * (move_speed * 0.35)
+	# Knockback decays toward zero; it adds onto movement so a hit visibly
 	# shoves the enemy back even while it's pursuing.
 	knockback = knockback.move_toward(Vector2.ZERO, KNOCKBACK_DECAY * delta)
-	velocity = chase + knockback
+	velocity = move + knockback
 	move_and_slide()
 
 	if dist < attack_range and attack_timer <= 0.0:
 		attack_timer = attack_cooldown
 		player_ref.take_damage(contact_damage)
+
+func _wander(delta: float) -> void:
+	wander_timer -= delta
+	if wander_timer <= 0.0:
+		wander_timer = randf_range(1.2, 2.6)
+		if randf() < 0.45:
+			wander_dir = Vector2.ZERO  # pause and loiter
+		else:
+			wander_dir = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)).normalized()
+
+func _telegraph() -> void:
+	# A quick brighten + pop the instant the dwarf notices you — readable "!".
+	modulate = Color(2.0, 1.3, 2.4)
+	scale = Vector2(1.18, 1.18)
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(self, "modulate", Color.WHITE, 0.28)
+	tw.tween_property(self, "scale", Vector2.ONE, 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func take_damage(amount: float, from_pos: Vector2 = global_position) -> void:
 	if _dying:
@@ -64,6 +95,7 @@ func take_damage(amount: float, from_pos: Vector2 = global_position) -> void:
 	if dir.length() < 0.01:
 		dir = Vector2.RIGHT
 	knockback = dir.normalized() * KNOCKBACK_FORCE
+	Audio.play_hit()
 	_flash_hit()
 	if hp <= 0.0:
 		_die()

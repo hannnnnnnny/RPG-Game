@@ -21,6 +21,7 @@ AidlcRules="*res://scripts/core/aidlc_rules.gd"
 LootGenerator="*res://scripts/core/loot_generator.gd"
 GameState="*res://scripts/core/game_state.gd"
 SaveSystem="*res://scripts/core/save_system.gd"
+Audio="*res://scripts/core/audio.gd"
 
 [display]
 

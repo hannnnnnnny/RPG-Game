@@ -14,7 +14,9 @@ func _ready() -> void:
 func _on_vision_opened(image_path: String, cap: String) -> void:
 	var tex: Texture2D = load(image_path)
 	if tex:
-		image.texture = tex
+		# Pixelate so the vision matches the pixel-art world instead of being a
+		# sharp painted JPG.
+		image.texture = Types.pixelate(tex, 128)
 	caption.text = cap
 	visible = true
 

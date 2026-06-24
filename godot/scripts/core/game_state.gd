@@ -106,6 +106,7 @@ func add_item(item: Dictionary) -> void:
 	inventory.push_front(item)
 	emit_signal("inventory_changed", inventory)
 	_log("获得装备：%s" % item.name)
+	Audio.play_pickup()
 	_schedule_save()
 
 func equip_item(item_id: String) -> void:
