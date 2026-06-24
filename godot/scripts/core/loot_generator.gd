@@ -4,15 +4,35 @@ extends Node
 const SLOTS := ["mainHand", "chest", "hands", "boots", "ring", "totem"]
 
 const BASE_NAMES := {
-	"mainHand": ["矿工断刃", "灰灯短剑", "黑潮凿斧"],
-	"offHand": ["破裂法器"],
-	"head": ["污灰兜帽"],
-	"chest": ["矿井皮甲", "盐石胸甲"],
-	"hands": ["裂岩手套", "旧皮手套"],
-	"boots": ["逃亡者旧靴", "灰泥长靴"],
-	"amulet": ["残响项链"],
-	"ring": ["黑腕戒指", "灰灯铜戒"],
-	"totem": ["图腾碎屑", "矿井护符"]
+	"mainHand": ["矿工断刃", "灰灯短剑", "黑潮凿斧", "锈蚀战镐", "残铁长矛"],
+	"offHand": ["破裂法器", "矿灯提盏", "裂纹符盘"],
+	"head": ["污灰兜帽", "锈铁矿盔", "破檐斗笠"],
+	"chest": ["矿井皮甲", "盐石胸甲", "黑潮锁链衣", "残布外披"],
+	"hands": ["裂岩手套", "旧皮手套", "锈钉护手"],
+	"boots": ["逃亡者旧靴", "灰泥长靴", "钉底矿靴", "破布裹足"],
+	"amulet": ["残响项链", "矿骨吊坠"],
+	"ring": ["黑腕戒指", "灰灯铜戒", "锈铁指环"],
+	"totem": ["图腾碎屑", "矿井护符", "封印残片"]
+}
+
+# 按品质给名字加前缀，让重复底材也能一眼区分。
+const QUALITY_PREFIX := {
+	"broken": "残破·",
+	"common": "",
+	"rare": "精制·",
+	"corrupted": "黑潮·",
+	"relic": "【遗世】",
+	"mythic": "【神话】"
+}
+
+# 按主导词条类别给稀有以上的物品加一个风味词。
+const CATEGORY_FLAVOR := {
+	"attack": "嗜血",
+	"defense": "坚岩",
+	"mobility": "疾风",
+	"forbidden": "低语",
+	"vessel": "容器",
+	"economy": "贪婪"
 }
 
 const AFFIX_POOL := [
@@ -75,7 +95,7 @@ func generate_loot(source: String, world_tier: int) -> Dictionary:
 
 	return {
 		"id": _random_id("item"),
-		"name": _pick(BASE_NAMES[slot]),
+		"name": _build_name(slot, quality, affixes),
 		"slot": slot,
 		"quality": quality,
 		"item_power": item_power,
@@ -84,6 +104,20 @@ func generate_loot(source: String, world_tier: int) -> Dictionary:
 		"affixes": affixes,
 		"core_effect": core_effect
 	}
+
+# 组装区分度高的名字：品质前缀 + (稀有以上)风味词 + 底材。
+func _build_name(slot: String, quality: String, affixes: Array) -> String:
+	var base: String = _pick(BASE_NAMES[slot])
+	var prefix: String = QUALITY_PREFIX.get(quality, "")
+	var flavor := ""
+	# rare and above get a flavor word from their strongest affix's category.
+	if quality != Types.QUALITY_BROKEN and quality != Types.QUALITY_COMMON and affixes.size() > 0:
+		var best: Dictionary = affixes[0]
+		for a in affixes:
+			if int(a.value) > int(best.value):
+				best = a
+		flavor = CATEGORY_FLAVOR.get(best.category, "") + "之"
+	return prefix + flavor + base
 
 func gold_for_kill(source: String, world_tier: int) -> int:
 	var base: int = 70 if source == "boss" else 24 if source == "elite" else 8

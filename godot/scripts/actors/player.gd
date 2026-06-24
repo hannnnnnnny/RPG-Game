@@ -45,6 +45,7 @@ const C_BELT := Color8(150, 110, 44)
 var facing: Facing = Facing.DOWN
 var roll_timer: float = 0.0
 var attack_timer: float = 0.0
+var step_timer: float = 0.0
 var moving: bool = false
 
 @onready var sprite: AnimatedSprite2D = $Sprite
@@ -77,6 +78,15 @@ func _physics_process(delta: float) -> void:
 	velocity = input * speed
 	move_and_slide()
 
+	# Footsteps while walking.
+	if moving:
+		step_timer -= delta
+		if step_timer <= 0.0:
+			step_timer = 0.32
+			Audio.play_step()
+	else:
+		step_timer = 0.0
+
 	if Input.is_action_just_pressed("roll") and stamina >= 28.0 and roll_timer <= 0.0:
 		stamina -= 28.0
 		roll_timer = ROLL_DURATION
@@ -88,6 +98,7 @@ func _physics_process(delta: float) -> void:
 
 	if Input.is_action_just_pressed("attack") and attack_timer <= 0.0:
 		attack_timer = ATTACK_COOLDOWN
+		Audio.play_swing()
 		emit_signal("attack_performed", facing, global_position)
 
 	_update_animation()

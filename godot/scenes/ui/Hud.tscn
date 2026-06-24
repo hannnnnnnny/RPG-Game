@@ -18,6 +18,34 @@ content_margin_top = 8.0
 content_margin_right = 10.0
 content_margin_bottom = 8.0
 
+[sub_resource type="StyleBoxFlat" id="bar_bg"]
+bg_color = Color(0.12, 0.1, 0.13, 0.9)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="fill_health"]
+bg_color = Color(0.78, 0.22, 0.28, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="fill_stamina"]
+bg_color = Color(0.42, 0.7, 0.34, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="fill_focus"]
+bg_color = Color(0.4, 0.62, 0.85, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
 [node name="Hud" type="Control"]
 anchors_preset = 15
 anchor_right = 1.0
@@ -44,6 +72,8 @@ custom_minimum_size = Vector2(0, 10)
 max_value = 100.0
 value = 100.0
 show_percentage = false
+theme_override_styles/background = SubResource("bar_bg")
+theme_override_styles/fill = SubResource("fill_health")
 
 [node name="StaminaLabel" type="Label" parent="Panel/VBox"]
 text = "体力"
@@ -54,6 +84,8 @@ custom_minimum_size = Vector2(0, 10)
 max_value = 100.0
 value = 100.0
 show_percentage = false
+theme_override_styles/background = SubResource("bar_bg")
+theme_override_styles/fill = SubResource("fill_stamina")
 
 [node name="FocusLabel" type="Label" parent="Panel/VBox"]
 text = "专注"
@@ -64,6 +96,8 @@ custom_minimum_size = Vector2(0, 10)
 max_value = 30.0
 value = 30.0
 show_percentage = false
+theme_override_styles/background = SubResource("bar_bg")
+theme_override_styles/fill = SubResource("fill_focus")
 
 [node name="Stats" type="HBoxContainer" parent="Panel/VBox"]
 theme_override_constants/separation = 10
