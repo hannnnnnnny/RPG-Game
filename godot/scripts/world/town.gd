@@ -36,7 +36,9 @@ var follower: Follower = null
 func _ready() -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_bake_world_texture()
-	player.global_position = Vector2(650, 760)  # arrive from the south gate
+	# Arrive from the south gate by default, or at a building door when
+	# returning from an interior.
+	player.global_position = GameState.consume_spawn_override(Vector2(650, 760))
 	var cam := player.get_node_or_null("Camera2D")
 	if cam:
 		cam.limit_right = WORLD_W
@@ -45,6 +47,7 @@ func _ready() -> void:
 	_setup_static_walls()
 	_setup_lamps()
 	_spawn_npcs()
+	_spawn_props()
 
 	if GameState.world_state.flags.get("first_dwarf_choice", "") == "save":
 		_spawn_follower()
@@ -62,16 +65,16 @@ func _process(_delta: float) -> void:
 		_check_interaction()
 
 func _check_interaction() -> void:
-	var nearest: TownNpc = null
+	var nearest: Node2D = null
 	var best := 999999.0
-	for n in npcs_root.get_children():
-		if n is TownNpc:
-			var d := player.global_position.distance_to(n.global_position)
+	for n in get_tree().get_nodes_in_group("interactable"):
+		if n is Node2D:
+			var d := player.global_position.distance_to((n as Node2D).global_position)
 			if d < 84.0 and d < best:
 				nearest = n
 				best = d
-	if nearest:
-		nearest.talk()
+	if nearest and nearest.has_method("interact"):
+		nearest.interact()
 
 func _setup_lamps() -> void:
 	for pos in LAMPS:
@@ -100,12 +103,6 @@ func _spawn_npcs() -> void:
 			"color": Color(0.32, 0.36, 0.42), "lines": []
 		},
 		{
-			"kind": "merchant", "name": "杂货商·铜婶", "pos": Vector2(610, 300),
-			"color": Color(0.55, 0.4, 0.22),
-			"lines": ["油、盐、还能用的矿灯——黑潮没把价钱涨上天，算它有良心。",
-				"想买东西？下一批货还在路上。你先在镇里转转。"]
-		},
-		{
 			"kind": "townsfolk", "name": "守夜人", "pos": Vector2(1000, 640),
 			"color": Color(0.4, 0.34, 0.3),
 			"lines": ["夜里别靠近镇墙。灯一灭，墙外的东西就贴上来。",
@@ -127,6 +124,39 @@ func _spawn_npcs() -> void:
 		glow.energy = 0.35
 		glow.position = Vector2(0, -16)
 		n.add_child(glow)
+
+func _spawn_props() -> void:
+	const PropScene := preload("res://scenes/actors/TownProp.tscn")
+	var defs := [
+		{
+			"kind": "door_store", "pos": Vector2(640, 248), "label": "杂货铺", "lines": []
+		},
+		{
+			"kind": "notice", "pos": Vector2(540, 600), "label": "灰灯镇告示板",
+			"lines": ["【告示】凡入镇者，须验手腕。见刺青者，鸣钟。——自治会",
+				"【悬赏】矿区方向有黑潮渗出，能封住裂口者，重谢。",
+				"【寻人】我的儿子下矿三天没回。若你见过他……别骗我。"]
+		},
+		{
+			"kind": "well", "pos": Vector2(680, 470), "label": "镇中水井",
+			"lines": ["井水还算清。镇民说，等井水发黑那天，就该弃镇了。"]
+		},
+		{
+			"kind": "crate", "pos": Vector2(820, 300), "label": "货箱",
+			"lines": ["几只钉死的木箱。铜婶的货，没付钱别动。"]
+		},
+		{
+			"kind": "crate", "pos": Vector2(280, 360), "label": "木箱",
+			"lines": ["空的。里面只有潮湿的稻草和一只死掉的矿灯。"]
+		}
+	]
+	for d in defs:
+		var p: TownProp = PropScene.instantiate()
+		p.kind = d.kind
+		p.label_text = d.label
+		p.lines = PackedStringArray(d.lines)
+		p.global_position = d.pos
+		npcs_root.add_child(p)
 
 func _spawn_follower() -> void:
 	if follower != null and is_instance_valid(follower):

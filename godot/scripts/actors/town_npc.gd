@@ -14,7 +14,12 @@ var _line_idx: int = 0
 
 func _ready() -> void:
 	add_to_group("town_npc")
+	add_to_group("interactable")
 	set_process(true)
+
+# Polymorphic entry point used by town._check_interaction.
+func interact() -> void:
+	talk()
 
 func _process(delta: float) -> void:
 	anim_t += delta
