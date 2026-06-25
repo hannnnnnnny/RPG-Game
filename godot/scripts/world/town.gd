@@ -97,33 +97,54 @@ func _pulse_light(light: PointLight2D) -> float:
 
 func _spawn_npcs() -> void:
 	const NpcScene := preload("res://scenes/actors/TownNpc.tscn")
+	# Fixed key NPCs.
 	var defs := [
 		{
 			"kind": "warden", "name": "灰灯门卫", "pos": Vector2(650, 660),
-			"color": Color(0.32, 0.36, 0.42), "lines": []
+			"robe": "dark_gray", "hooded": true, "wander": false, "lines": []
 		},
 		{
-			"kind": "townsfolk", "name": "守夜人", "pos": Vector2(1000, 640),
-			"color": Color(0.4, 0.34, 0.3),
+			"kind": "townsfolk", "name": "守夜人", "pos": Vector2(1010, 660),
+			"robe": "black", "hooded": true, "wander": false,
 			"lines": ["夜里别靠近镇墙。灯一灭，墙外的东西就贴上来。",
 				"你是从矿里出来的？那下面……还有活人吗？"]
 		}
 	]
+	# A wandering crowd — varied robe colors so the town feels populated.
+	var crowd := [
+		{"name": "卖灯油的老汉", "pos": Vector2(560, 410), "robe": "brown",
+			"lines": ["灯油涨价了，可没人敢不买。黑里头，灯就是命。"]},
+		{"name": "缝补匠", "pos": Vector2(760, 430), "robe": "forest_green",
+			"lines": ["你那披风破成这样……坐下，我给你缝两针，不收钱。"]},
+		{"name": "抱孩子的妇人", "pos": Vector2(640, 470), "robe": "red", "hooded": false,
+			"lines": ["嘘，孩子刚睡。他总梦见水……我怕。"]},
+		{"name": "醉汉", "pos": Vector2(840, 470), "robe": "brown",
+			"lines": ["再来一碗！黑潮要来就来，老子先喝够本……"]},
+		{"name": "传教者", "pos": Vector2(520, 540), "robe": "black",
+			"lines": ["克哈不是恶魔，是潮水。潮水来时，聪明人学会游泳。"]},
+		{"name": "矿工遗孀", "pos": Vector2(700, 560), "robe": "dark_gray",
+			"lines": ["我男人也下了那个矿。你……见过黑腕队长吗？"]},
+		{"name": "孩童", "pos": Vector2(600, 520), "robe": "blue", "hooded": false,
+			"lines": ["大哥哥/大姐姐，你会打怪吗？教我嘛！"]},
+		{"name": "巡镇民兵", "pos": Vector2(880, 540), "robe": "forest_green",
+			"lines": ["手别离剑太远。灰灯镇看着太平，太平是装的。"]}
+	]
 	for d in defs:
-		var n: TownNpc = NpcScene.instantiate()
-		n.kind = d.kind
-		n.npc_name = d.name
-		n.body_color = d.color
-		n.lines = PackedStringArray(d.lines)
-		n.global_position = d.pos
-		npcs_root.add_child(n)
-		var glow := PointLight2D.new()
-		glow.texture = LIGHT_TEX
-		glow.color = Color(1.0, 0.85, 0.6)
-		glow.texture_scale = 1.0
-		glow.energy = 0.35
-		glow.position = Vector2(0, -16)
-		n.add_child(glow)
+		_make_npc(NpcScene, d)
+	for d in crowd:
+		d["kind"] = "townsfolk"
+		_make_npc(NpcScene, d)
+
+func _make_npc(scene: PackedScene, d: Dictionary) -> void:
+	var n: TownNpc = scene.instantiate()
+	n.kind = d.get("kind", "townsfolk")
+	n.npc_name = d.name
+	n.robe_color = d.get("robe", "brown")
+	n.hooded = d.get("hooded", true)
+	n.wander = d.get("wander", true)
+	n.lines = PackedStringArray(d.get("lines", []))
+	n.global_position = d.pos
+	npcs_root.add_child(n)
 
 func _spawn_props() -> void:
 	const PropScene := preload("res://scenes/actors/TownProp.tscn")
@@ -157,6 +178,38 @@ func _spawn_props() -> void:
 		p.lines = PackedStringArray(d.lines)
 		p.global_position = d.pos
 		npcs_root.add_child(p)
+
+	# Interactive centerpiece: a fountain in the plaza.
+	_make_prop(PropScene, "fountain", Vector2(680, 430), "镇心喷泉", false,
+		["泉水从石口里淌出来，居然是清的。镇民轮班守着它，像守着最后一盏灯。"])
+	# Market stalls flanking the shop.
+	_make_prop(PropScene, "stall", Vector2(470, 300), "菜摊", false,
+		["半篮萎了的菜，半篮腌货。摊主说：「能吃就别挑。」"])
+	_make_prop(PropScene, "stall", Vector2(810, 250), "杂货摊", false,
+		["绳子、钉子、半截蜡烛——黑潮来之前没人要的东西，如今都成了硬通货。"])
+
+	# Pure scenery (decorative=true): lanterns, barrels, planters, fences.
+	var decor := [
+		["lantern_post", Vector2(470, 350)], ["lantern_post", Vector2(890, 350)],
+		["lantern_post", Vector2(470, 580)], ["lantern_post", Vector2(890, 580)],
+		["barrel", Vector2(560, 300)], ["barrel", Vector2(578, 300)],
+		["barrel", Vector2(860, 560)], ["barrel", Vector2(240, 420)],
+		["planter", Vector2(620, 360)], ["planter", Vector2(740, 360)],
+		["planter", Vector2(620, 600)], ["planter", Vector2(740, 600)],
+		["fence", Vector2(500, 640)], ["fence", Vector2(560, 640)],
+		["fence", Vector2(800, 640)], ["fence", Vector2(860, 640)]
+	]
+	for dd in decor:
+		_make_prop(PropScene, dd[0], dd[1], "", true, [])
+
+func _make_prop(scene: PackedScene, kind: String, pos: Vector2, label: String, deco: bool, lines: Array) -> void:
+	var p: TownProp = scene.instantiate()
+	p.kind = kind
+	p.label_text = label
+	p.decorative = deco
+	p.lines = PackedStringArray(lines)
+	p.global_position = pos
+	npcs_root.add_child(p)
 
 func _spawn_follower() -> void:
 	if follower != null and is_instance_valid(follower):
