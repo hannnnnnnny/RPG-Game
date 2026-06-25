@@ -64,7 +64,7 @@ func _setup_decor() -> void:
 	copper.kind = "merchant"
 	copper.npc_name = "杂货商·铜婶"
 	copper.robe_color = "red"
-	copper.hooded = false
+	copper.head = "long"
 	copper.wander = false  # stays behind the counter
 	copper.lines = PackedStringArray(["走到柜台前，按 E，咱们做笔买卖。"])
 	copper.global_position = Vector2(360, 150)
