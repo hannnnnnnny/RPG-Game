@@ -25,8 +25,8 @@ const LAMPS := [
 	Vector2(680, 300), Vector2(680, 700)
 ]
 
-@onready var player: Player = $Player
-@onready var npcs_root: Node2D = $Npcs
+@onready var player: Player = $Entities/Player
+@onready var npcs_root: Node2D = $Entities  # y-sorted: NPCs/props/player draw by Y
 @onready var objective_label: Label = $UILayer/Objective
 
 var wall_tiles: Array = []
@@ -101,38 +101,47 @@ func _spawn_npcs() -> void:
 	var defs := [
 		{
 			"kind": "warden", "name": "灰灯门卫", "pos": Vector2(650, 660),
-			"robe": "dark_gray", "hooded": true, "wander": false, "lines": []
+			"robe": "dark_gray", "head": "hood", "wander": false, "lines": []
 		},
 		{
 			"kind": "townsfolk", "name": "守夜人", "pos": Vector2(1010, 660),
-			"robe": "black", "hooded": true, "wander": false,
+			"robe": "black", "head": "hood", "wander": false,
 			"lines": ["夜里别靠近镇墙。灯一灭，墙外的东西就贴上来。",
 				"你是从矿里出来的？那下面……还有活人吗？"]
 		}
 	]
-	# A wandering crowd — varied robe colors so the town feels populated.
+	# Wandering crowd — mixed hoods and hairstyles so nobody is bald.
 	var crowd := [
-		{"name": "卖灯油的老汉", "pos": Vector2(560, 410), "robe": "brown",
+		{"name": "卖灯油的老汉", "pos": Vector2(560, 410), "robe": "brown", "head": "plain",
 			"lines": ["灯油涨价了，可没人敢不买。黑里头，灯就是命。"]},
-		{"name": "缝补匠", "pos": Vector2(760, 430), "robe": "forest_green",
+		{"name": "缝补匠", "pos": Vector2(760, 430), "robe": "forest_green", "head": "long",
 			"lines": ["你那披风破成这样……坐下，我给你缝两针，不收钱。"]},
-		{"name": "抱孩子的妇人", "pos": Vector2(640, 470), "robe": "red", "hooded": false,
-			"lines": ["嘘，孩子刚睡。他总梦见水……我怕。"]},
-		{"name": "醉汉", "pos": Vector2(840, 470), "robe": "brown",
+		{"name": "醉汉", "pos": Vector2(840, 470), "robe": "brown", "head": "bangsshort",
 			"lines": ["再来一碗！黑潮要来就来，老子先喝够本……"]},
-		{"name": "传教者", "pos": Vector2(520, 540), "robe": "black",
+		{"name": "传教者", "pos": Vector2(520, 540), "robe": "black", "head": "hood",
 			"lines": ["克哈不是恶魔，是潮水。潮水来时，聪明人学会游泳。"]},
-		{"name": "矿工遗孀", "pos": Vector2(700, 560), "robe": "dark_gray",
+		{"name": "巡镇民兵", "pos": Vector2(880, 540), "robe": "forest_green", "head": "plain",
+			"lines": ["手别离剑太远。灰灯镇看着太平，太平是装的。"]},
+		{"name": "挑水的少年", "pos": Vector2(980, 420), "robe": "blue", "head": "bangsshort",
+			"lines": ["井水我来挑就好。你是英雄吧？英雄不挑水。"]}
+	]
+	# Seated folk around the fountain — they sit, they don't run around.
+	var seated := [
+		{"name": "抱孩子的妇人", "pos": Vector2(610, 500), "head": "long",
+			"lines": ["嘘，孩子刚睡。他总梦见水……我怕。"]},
+		{"name": "矿工遗孀", "pos": Vector2(760, 500), "head": "plain",
 			"lines": ["我男人也下了那个矿。你……见过黑腕队长吗？"]},
-		{"name": "孩童", "pos": Vector2(600, 520), "robe": "blue", "hooded": false,
-			"lines": ["大哥哥/大姐姐，你会打怪吗？教我嘛！"]},
-		{"name": "巡镇民兵", "pos": Vector2(880, 540), "robe": "forest_green",
-			"lines": ["手别离剑太远。灰灯镇看着太平，太平是装的。"]}
+		{"name": "歇脚的老妪", "pos": Vector2(690, 520), "head": "long",
+			"lines": ["老啦，走两步就喘。坐在灯下，听听人声，也算活着。"]}
 	]
 	for d in defs:
 		_make_npc(NpcScene, d)
 	for d in crowd:
 		d["kind"] = "townsfolk"
+		_make_npc(NpcScene, d)
+	for d in seated:
+		d["kind"] = "townsfolk"
+		d["seated"] = true
 		_make_npc(NpcScene, d)
 
 func _make_npc(scene: PackedScene, d: Dictionary) -> void:
@@ -140,7 +149,8 @@ func _make_npc(scene: PackedScene, d: Dictionary) -> void:
 	n.kind = d.get("kind", "townsfolk")
 	n.npc_name = d.name
 	n.robe_color = d.get("robe", "brown")
-	n.hooded = d.get("hooded", true)
+	n.head = d.get("head", "hood")
+	n.seated = d.get("seated", false)
 	n.wander = d.get("wander", true)
 	n.lines = PackedStringArray(d.get("lines", []))
 	n.global_position = d.pos
@@ -217,7 +227,7 @@ func _spawn_follower() -> void:
 	const FollowerScene := preload("res://scenes/actors/Follower.tscn")
 	follower = FollowerScene.instantiate()
 	follower.global_position = player.global_position + Vector2(-40, 10)
-	add_child(follower)
+	npcs_root.add_child(follower)  # y-sorted with the crowd
 
 # ---------- Tile bake (town theme) ----------
 

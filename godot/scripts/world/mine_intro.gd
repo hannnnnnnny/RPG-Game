@@ -34,10 +34,10 @@ const PATH_POINTS := [
 
 const LIGHT_TEX := preload("res://assets/textures/light_soft.tres")
 
-@onready var player: Player = $Player
-@onready var camera: Camera2D = $Player/Camera2D
-@onready var enemies_root: Node2D = $Enemies
-@onready var interactables_root: Node2D = $Interactables
+@onready var player: Player = $Entities/Player
+@onready var camera: Camera2D = $Entities/Player/Camera2D
+@onready var enemies_root: Node2D = $Entities  # y-sorted with player/interactables
+@onready var interactables_root: Node2D = $Entities
 @onready var objective_label: Label = $UILayer/Objective
 @onready var hud: Control = $UILayer/Hud
 @onready var dialogue: Control = $UILayer/Dialogue
@@ -339,7 +339,7 @@ func _spawn_follower() -> void:
 	follower = FollowerScene.instantiate()
 	# Start where the dwarf was lying, just behind the player.
 	follower.global_position = Vector2(395, 230)
-	add_child(follower)
+	enemies_root.add_child(follower)  # y-sorted
 	var glow := _make_glow(Color(1.0, 0.7, 0.45), 1.2, 0.5)
 	glow.position = Vector2(0, -14)
 	follower.add_child(glow)
