@@ -1,41 +1,22 @@
-## 玩家角色 disi —— 程序化烘焙的 chibi sprite sheet + AnimatedSprite2D 动画
+## 玩家角色 disi —— LPC 开源角色（女性体型 + 紫袍 + 兜帽，运行时合成）
+## 真 4 方向行走/站立动画 + 奔跑(Shift) + 鼠标瞄准攻击。
 ##
-## 渲染管线已是 AnimatedSprite2D。换成真实手绘/AI sprite 只需：
-##   1. 把一张 sprite sheet PNG 拖进 res://assets/sprites/disi/
-##   2. 把 _ready 里的 `_bake_player_sheet()` 换成 `load("res://assets/sprites/disi/xxx.png")`
-##   3. 保证帧布局是 9 帧（down 0-2 / up 3-5 / side 6-8，每组 neutral/左踏/右踏）
-##      —— 或调整 _build_frames 的索引
-## 其它逻辑（移动/翻滚/攻击/动画选择）都不用动。
-
+## 美术来源：Liberated Pixel Cup (LPC)，CC-BY-SA 3.0 / GPL 3.0 / OGA-BY 3.0。
+## 见 godot/CREDITS.md。三层在 _ready 用 Image.blend_rect 合成。
 class_name Player
 extends CharacterBody2D
 
-const WALK_SPEED := 140.0
-const ROLL_SPEED := 240.0
+const WALK_SPEED := 130.0
+const SPRINT_SPEED := 210.0
+const ROLL_SPEED := 250.0
 const ROLL_DURATION := 0.26
-const ATTACK_COOLDOWN := 0.42
+const ATTACK_COOLDOWN := 0.34
+const STAMINA_SPRINT_DRAIN := 24.0
+const STAMINA_REGEN := 20.0
 
-# Sprite sheet geometry
-const PFW := 18  # frame width  (source px)
-const PFH := 32  # frame height (source px)
+const LPC_FRAME := 64  # source frame size
 
 enum Facing { DOWN, LEFT, UP, RIGHT }
-
-# disi palette
-const C_OUT := Color8(12, 7, 16)
-const C_HAIR := Color8(34, 20, 12)
-const C_HAIR_HI := Color8(64, 40, 24)
-const C_SKIN := Color8(231, 196, 161)
-const C_SKIN_SH := Color8(174, 132, 102)
-const C_EYE := Color8(22, 12, 10)
-const C_SHIRT := Color8(78, 42, 108)
-const C_SHIRT_HI := Color8(110, 64, 146)
-const C_SHIRT_SH := Color8(48, 24, 70)
-const C_PANTS := Color8(32, 26, 40)
-const C_PANTS_SH := Color8(18, 13, 24)
-const C_BOOT := Color8(64, 40, 24)
-const C_BOOT_SH := Color8(40, 24, 14)
-const C_BELT := Color8(150, 110, 44)
 
 @export var stamina: float = 100.0
 @export var health: float = 100.0
@@ -47,14 +28,15 @@ var roll_timer: float = 0.0
 var attack_timer: float = 0.0
 var step_timer: float = 0.0
 var moving: bool = false
+var sprinting: bool = false
 
 @onready var sprite: AnimatedSprite2D = $Sprite
 
-signal attack_performed(facing_dir: int, position: Vector2)
+signal attack_performed(aim_angle: float, position: Vector2)
 
 func _ready() -> void:
 	add_to_group("player")
-	var sheet := _bake_player_sheet()
+	var sheet := _composite_lpc()
 	sprite.sprite_frames = _build_frames(sheet)
 	sprite.play("idle_down")
 
@@ -74,15 +56,27 @@ func _physics_process(delta: float) -> void:
 		else:
 			facing = Facing.UP if input.y < 0 else Facing.DOWN
 
-	var speed := ROLL_SPEED if roll_timer > 0.0 else WALK_SPEED
+	# Sprint: hold Shift while moving, drains stamina.
+	sprinting = Input.is_action_pressed("sprint") and moving and stamina > 1.0
+	var speed := WALK_SPEED
+	if roll_timer > 0.0:
+		speed = ROLL_SPEED
+	elif sprinting:
+		speed = SPRINT_SPEED
 	velocity = input * speed
 	move_and_slide()
 
-	# Footsteps while walking.
+	# Stamina: drain while sprinting, otherwise regen (and not mid-roll).
+	if sprinting:
+		stamina = max(0.0, stamina - STAMINA_SPRINT_DRAIN * delta)
+	elif roll_timer <= 0.0:
+		stamina = min(max_stamina, stamina + STAMINA_REGEN * delta)
+
+	# Footsteps (quicker cadence when sprinting).
 	if moving:
 		step_timer -= delta
 		if step_timer <= 0.0:
-			step_timer = 0.32
+			step_timer = 0.22 if sprinting else 0.34
 			Audio.play_step()
 	else:
 		step_timer = 0.0
@@ -93,13 +87,16 @@ func _physics_process(delta: float) -> void:
 		modulate = Color(0.6, 0.85, 0.8)
 		await get_tree().create_timer(ROLL_DURATION).timeout
 		modulate = Color.WHITE
-	if roll_timer <= 0.0:
-		stamina = min(max_stamina, stamina + delta * 22.0)
 
+	# Attack toward the mouse cursor — ARPG-style free aim.
 	if Input.is_action_just_pressed("attack") and attack_timer <= 0.0:
 		attack_timer = ATTACK_COOLDOWN
+		var aim := get_global_mouse_position() - global_position
+		if aim.length() < 1.0:
+			aim = _facing_vector()
+		_face_toward(aim)
 		Audio.play_swing()
-		emit_signal("attack_performed", facing, global_position)
+		emit_signal("attack_performed", aim.angle(), global_position)
 
 	_update_animation()
 
@@ -112,21 +109,27 @@ func _physics_process(delta: float) -> void:
 		"max_focus": 30
 	})
 
+func _facing_vector() -> Vector2:
+	match facing:
+		Facing.UP: return Vector2.UP
+		Facing.LEFT: return Vector2.LEFT
+		Facing.RIGHT: return Vector2.RIGHT
+		_: return Vector2.DOWN
+
+func _face_toward(v: Vector2) -> void:
+	if abs(v.x) > abs(v.y):
+		facing = Facing.LEFT if v.x < 0 else Facing.RIGHT
+	else:
+		facing = Facing.UP if v.y < 0 else Facing.DOWN
+
 func _update_animation() -> void:
 	var dir := "down"
 	match facing:
-		Facing.UP:
-			dir = "up"
-			sprite.flip_h = false
-		Facing.LEFT:
-			dir = "side"
-			sprite.flip_h = true
-		Facing.RIGHT:
-			dir = "side"
-			sprite.flip_h = false
-		_:
-			dir = "down"
-			sprite.flip_h = false
+		Facing.UP: dir = "up"
+		Facing.LEFT: dir = "left"
+		Facing.RIGHT: dir = "right"
+		_: dir = "down"
+	sprite.speed_scale = 1.5 if sprinting else 1.0
 	var anim := ("walk_" if moving else "idle_") + dir
 	if sprite.animation != anim:
 		sprite.play(anim)
@@ -148,149 +151,59 @@ func _on_player_down() -> void:
 		"tone": Types.TONE_WHISPER
 	})
 
-# ============ Procedural sprite sheet bake ============
-# 9 frames: down(0-2), up(3-5), side(6-8). Each group = neutral / left-step /
-# right-step. Left facing reuses the side frames mirrored via flip_h.
+# ============ LPC layer composite ============
+# Stack body + purple robe + hood into one walk sheet (576x256, 9 frames x 4
+# rows). LPC layers align perfectly by design, so a straight alpha blend works.
 
-func _bake_player_sheet() -> ImageTexture:
-	var img := Image.create(PFW * 9, PFH, false, Image.FORMAT_RGBA8)
-	for i in range(3):
-		_draw_down(img, i * PFW, i)
-	for i in range(3):
-		_draw_up(img, (3 + i) * PFW, i)
-	for i in range(3):
-		_draw_side(img, (6 + i) * PFW, i)
-	return ImageTexture.create_from_image(img)
+func _composite_lpc() -> ImageTexture:
+	var body := _img("res://assets/sprites/disi/body_walk.png")
+	var robe := _img("res://assets/sprites/disi/robe_walk.png")
+	var hood := _img("res://assets/sprites/disi/hood_walk.png")
+	if body == null:
+		return null
+	if robe != null:
+		body.blend_rect(robe, Rect2i(0, 0, robe.get_width(), robe.get_height()), Vector2i.ZERO)
+	if hood != null:
+		body.blend_rect(hood, Rect2i(0, 0, hood.get_width(), hood.get_height()), Vector2i.ZERO)
+	return ImageTexture.create_from_image(body)
 
+func _img(path: String) -> Image:
+	var tex: Texture2D = load(path)
+	if tex == null:
+		return null
+	var im := tex.get_image()
+	if im == null:
+		return null
+	im = im.duplicate()
+	if im.get_format() != Image.FORMAT_RGBA8:
+		im.convert(Image.FORMAT_RGBA8)
+	return im
+
+# Rows: 0=up, 1=left, 2=down, 3=right. Frame 0 = standing (idle); 1-8 = walk.
 func _build_frames(sheet: Texture2D) -> SpriteFrames:
 	var sf := SpriteFrames.new()
 	if sf.has_animation("default"):
 		sf.remove_animation("default")
-	var groups := {"down": 0, "up": 3, "side": 6}
-	for d in groups:
-		var base: int = groups[d]
-		var idle_name: String = "idle_" + str(d)
-		sf.add_animation(idle_name)
-		sf.set_animation_loop(idle_name, true)
-		sf.set_animation_speed(idle_name, 1.0)
-		sf.add_frame(idle_name, _atlas(sheet, base))
-		var walk_name: String = "walk_" + str(d)
-		sf.add_animation(walk_name)
-		sf.set_animation_loop(walk_name, true)
-		sf.set_animation_speed(walk_name, 8.0)
-		sf.add_frame(walk_name, _atlas(sheet, base))      # neutral
-		sf.add_frame(walk_name, _atlas(sheet, base + 1))  # left step
-		sf.add_frame(walk_name, _atlas(sheet, base))      # neutral
-		sf.add_frame(walk_name, _atlas(sheet, base + 2))  # right step
+	if sheet == null:
+		return sf
+	var rows := {"up": 0, "left": 1, "down": 2, "right": 3}
+	for dir in rows:
+		var row: int = rows[dir]
+		var walk := "walk_" + str(dir)
+		sf.add_animation(walk)
+		sf.set_animation_loop(walk, true)
+		sf.set_animation_speed(walk, 10.0)
+		for col in range(1, 9):
+			sf.add_frame(walk, _atlas(sheet, col, row))
+		var idle := "idle_" + str(dir)
+		sf.add_animation(idle)
+		sf.set_animation_loop(idle, true)
+		sf.set_animation_speed(idle, 1.0)
+		sf.add_frame(idle, _atlas(sheet, 0, row))
 	return sf
 
-func _atlas(sheet: Texture2D, frame_idx: int) -> AtlasTexture:
+func _atlas(sheet: Texture2D, col: int, row: int) -> AtlasTexture:
 	var at := AtlasTexture.new()
 	at.atlas = sheet
-	at.region = Rect2(frame_idx * PFW, 0, PFW, PFH)
+	at.region = Rect2(col * LPC_FRAME, row * LPC_FRAME, LPC_FRAME, LPC_FRAME)
 	return at
-
-func _pf(img: Image, x: int, y: int, w: int, h: int, col: Color) -> void:
-	img.fill_rect(Rect2i(x, y, w, h), col)
-
-func _boots(img: Image, ox: int, step: int) -> void:
-	var lo := 0
-	var ro := 0
-	if step == 1:
-		lo = -1
-	elif step == 2:
-		ro = -1
-	_pf(img, ox + 5, 27 + lo, 3, 3, C_BOOT)
-	_pf(img, ox + 5, 29 + lo, 3, 1, C_BOOT_SH)
-	_pf(img, ox + 10, 27 + ro, 3, 3, C_BOOT)
-	_pf(img, ox + 10, 29 + ro, 3, 1, C_BOOT_SH)
-
-func _torso_down_up(img: Image, ox: int, back: bool) -> void:
-	_pf(img, ox + 4, 13, 10, 8, C_SHIRT)
-	_pf(img, ox + 4, 13, 1, 8, C_OUT)
-	_pf(img, ox + 13, 13, 1, 8, C_OUT)
-	_pf(img, ox + 5, 14, 1, 6, C_SHIRT_HI)
-	_pf(img, ox + 12, 14, 1, 6, C_SHIRT_SH)
-	if back:
-		_pf(img, ox + 8, 13, 1, 7, C_SHIRT_SH)  # spine seam
-	else:
-		_pf(img, ox + 8, 13, 2, 2, C_SHIRT_SH)  # V collar
-	# belt
-	_pf(img, ox + 4, 20, 10, 1, C_BELT)
-	# pants
-	_pf(img, ox + 5, 21, 8, 6, C_PANTS)
-	_pf(img, ox + 8, 21, 2, 6, C_PANTS_SH)
-
-func _draw_down(img: Image, ox: int, step: int) -> void:
-	# hair
-	_pf(img, ox + 5, 2, 8, 1, C_OUT)
-	_pf(img, ox + 4, 3, 1, 9, C_OUT)
-	_pf(img, ox + 13, 3, 1, 9, C_OUT)
-	_pf(img, ox + 5, 3, 8, 5, C_HAIR)
-	_pf(img, ox + 6, 3, 4, 1, C_HAIR_HI)
-	# face
-	_pf(img, ox + 5, 8, 8, 4, C_SKIN)
-	_pf(img, ox + 5, 8, 1, 2, C_HAIR)
-	_pf(img, ox + 12, 8, 1, 2, C_HAIR)
-	_pf(img, ox + 11, 8, 1, 4, C_SKIN_SH)
-	_pf(img, ox + 7, 9, 1, 1, C_EYE)
-	_pf(img, ox + 10, 9, 1, 1, C_EYE)
-	_pf(img, ox + 8, 11, 2, 1, C_SKIN_SH)
-	_pf(img, ox + 5, 12, 8, 1, C_OUT)
-	# body
-	_torso_down_up(img, ox, false)
-	_boots(img, ox, step)
-
-func _draw_up(img: Image, ox: int, step: int) -> void:
-	# all hair, no face
-	_pf(img, ox + 5, 2, 8, 1, C_OUT)
-	_pf(img, ox + 4, 3, 1, 9, C_OUT)
-	_pf(img, ox + 13, 3, 1, 9, C_OUT)
-	_pf(img, ox + 5, 3, 8, 9, C_HAIR)
-	_pf(img, ox + 6, 3, 4, 1, C_HAIR_HI)
-	_pf(img, ox + 5, 11, 8, 1, C_OUT)
-	# body (back)
-	_torso_down_up(img, ox, true)
-	_boots(img, ox, step)
-
-func _draw_side(img: Image, ox: int, step: int) -> void:
-	# Faces RIGHT (left facing = flip_h). Back of head at left, face at right.
-	_pf(img, ox + 4, 2, 8, 1, C_OUT)
-	_pf(img, ox + 3, 3, 1, 9, C_OUT)
-	_pf(img, ox + 12, 3, 1, 5, C_OUT)
-	_pf(img, ox + 4, 3, 8, 5, C_HAIR)
-	_pf(img, ox + 4, 8, 3, 3, C_HAIR)         # hair down the back
-	_pf(img, ox + 4, 3, 1, 4, C_HAIR_HI)
-	# face (right half)
-	_pf(img, ox + 7, 8, 5, 4, C_SKIN)
-	_pf(img, ox + 10, 9, 1, 1, C_EYE)
-	_pf(img, ox + 12, 9, 1, 1, C_SKIN)        # nose tip
-	_pf(img, ox + 8, 11, 3, 1, C_SKIN_SH)
-	_pf(img, ox + 4, 12, 9, 1, C_OUT)
-	# torso (slim profile)
-	_pf(img, ox + 5, 13, 8, 8, C_SHIRT)
-	_pf(img, ox + 5, 13, 1, 8, C_OUT)
-	_pf(img, ox + 12, 13, 1, 8, C_OUT)
-	_pf(img, ox + 6, 14, 1, 6, C_SHIRT_HI)
-	_pf(img, ox + 11, 14, 1, 6, C_SHIRT_SH)
-	# swinging arm (front), offset by step
-	var arm := 0
-	if step == 1:
-		arm = -1
-	elif step == 2:
-		arm = 1
-	_pf(img, ox + 10, 15 + arm, 2, 4, C_SHIRT_SH)
-	_pf(img, ox + 10, 19 + arm, 1, 1, C_SKIN)  # hand
-	# belt + pants
-	_pf(img, ox + 5, 20, 8, 1, C_BELT)
-	_pf(img, ox + 5, 21, 8, 6, C_PANTS)
-	# stride: front foot / back foot
-	var fo := 0
-	if step == 1:
-		fo = 1
-	elif step == 2:
-		fo = -1
-	_pf(img, ox + 8 + fo, 27, 4, 3, C_BOOT)
-	_pf(img, ox + 8 + fo, 29, 4, 1, C_BOOT_SH)
-	_pf(img, ox + 4 - fo, 27, 4, 3, C_BOOT_SH)
-	_pf(img, ox + 4 - fo, 29, 4, 1, C_OUT)

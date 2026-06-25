@@ -43,9 +43,13 @@ const LIGHT_TEX := preload("res://assets/textures/light_soft.tres")
 @onready var dialogue: Control = $UILayer/Dialogue
 @onready var choice: Control = $UILayer/Choice
 @onready var vision: Control = $UILayer/Vision
+@onready var boss_bar: Control = $UILayer/BossBar
 
 var wall_tiles: Array = []  # Array of Rect2 for collision
 var world_tex: ImageTexture  # Baked pixel-art tile map (replaces flat color blocks)
+var boss: Boss = null
+var _boss_spawned: bool = false
+var follower: Follower = null
 
 func _ready() -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -57,7 +61,12 @@ func _ready() -> void:
 	_setup_static_walls()
 
 	player.attack_performed.connect(_on_player_attack)
+	GameState.world_state_changed.connect(_on_world_changed)
 	Audio.start_ambient()
+
+	# On reload: if the dwarf was already rescued, he's still tagging along.
+	if GameState.world_state.flags.get("first_dwarf_choice", "") == "save":
+		_spawn_follower()
 
 	GameState.set_dialogue({
 		"speaker": "克哈低语",
@@ -305,15 +314,95 @@ func _check_interaction() -> void:
 	if nearest and nearest.can_interact():
 		nearest.trigger()
 
-func _on_player_attack(facing: int, pos: Vector2) -> void:
-	# Slash effect — directional cone hit
-	var facing_angle: float
-	match facing:
-		Player.Facing.DOWN: facing_angle = PI / 2
-		Player.Facing.UP: facing_angle = -PI / 2
-		Player.Facing.LEFT: facing_angle = PI
-		Player.Facing.RIGHT: facing_angle = 0
-		_: facing_angle = PI / 2
+# ---------- Boss encounter (level loop) ----------
+
+func _on_world_changed(path: String, value: Variant) -> void:
+	# Touching the totem (the vision of the captain being consumed) summons
+	# his corrupted form as the boss, guarding the exit.
+	if path == "flags.touched_totem_fragment" and value == true and not _boss_spawned:
+		_spawn_boss()
+	# Choosing to save the injured dwarf — he gets up and follows you.
+	if path == "flags.first_dwarf_choice" and value == "save":
+		_spawn_follower()
+	# Escaping the mine transitions to 灰灯镇 after a beat.
+	if path == "flags.escaped_mine" and value == true:
+		_go_to_town()
+
+func _go_to_town() -> void:
+	await get_tree().create_timer(2.2).timeout
+	get_tree().change_scene_to_file("res://scenes/world/TownAshlight.tscn")
+
+func _spawn_follower() -> void:
+	if follower != null and is_instance_valid(follower):
+		return
+	const FollowerScene := preload("res://scenes/actors/Follower.tscn")
+	follower = FollowerScene.instantiate()
+	# Start where the dwarf was lying, just behind the player.
+	follower.global_position = Vector2(395, 230)
+	add_child(follower)
+	var glow := _make_glow(Color(1.0, 0.7, 0.45), 1.2, 0.5)
+	glow.position = Vector2(0, -14)
+	follower.add_child(glow)
+	# Remove the lying-dwarf interactable so he isn't in two places at once.
+	for n in interactables_root.get_children():
+		if n is Interactable and n.interact_type == "injured_dwarf":
+			n.queue_free()
+
+func _spawn_boss() -> void:
+	_boss_spawned = true
+	const BossScene := preload("res://scenes/actors/Boss.tscn")
+	boss = BossScene.instantiate()
+	boss.global_position = Vector2(1090, 520)  # in the room before the exit
+	enemies_root.add_child(boss)
+	var aura := _make_glow(Color(0.7, 0.25, 0.95), 2.0, 0.9)
+	aura.position = Vector2(0, -24)
+	boss.add_child(aura)
+	boss.died.connect(_on_boss_died)
+	boss.summon_requested.connect(_on_boss_summon)
+	boss_bar.bind(boss, "黑腕队长·格罗姆")
+	objective_label.text = "目标：击败黑腕队长·格罗姆。"
+	# Let the player read the vision first, then the boss roars in.
+	await get_tree().create_timer(0.6).timeout
+	GameState.set_dialogue({
+		"speaker": "黑腕队长·格罗姆",
+		"text": "图腾……是我打开的。现在它从我体内看着你。",
+		"tone": Types.TONE_WARNING
+	})
+
+func _on_boss_summon(at: Vector2) -> void:
+	const EnemyScene := preload("res://scenes/actors/Enemy.tscn")
+	for off in [Vector2(-70, -40), Vector2(70, -40)]:
+		var e: Enemy = EnemyScene.instantiate()
+		e.global_position = at + off
+		enemies_root.add_child(e)
+		var a := _make_glow(Color(0.55, 0.2, 0.7), 1.0, 0.45)
+		a.position = Vector2(0, -20)
+		e.add_child(a)
+
+func _on_boss_died() -> void:
+	GameState.request_state_change({
+		"type": "defeat_grom",
+		"requested_by": "黑腕队长·格罗姆",
+		"target_id": "boss_grom",
+		"reason": "玩家击败了腐化的矮人队长",
+		"effects": [
+			{"path": "flags.defeated_grom", "value": true},
+			{"path": "vessel_awakening", "value": 3}
+		]
+	})
+	# Guaranteed strong drop + gold for the kill.
+	GameState.add_gold(LootGenerator.gold_for_kill("boss", GameState.world_state.world_tier))
+	GameState.add_item(LootGenerator.generate_loot("elite", GameState.world_state.world_tier))
+	objective_label.text = "目标：黑潮退去了。前往矿井出口，逃向灰灯镇。"
+	GameState.set_dialogue({
+		"speaker": "克哈低语",
+		"text": "他空了。你没有。出口的黑潮已经为你让路——去灰灯镇，那里还有人以为灯能挡住海。",
+		"tone": Types.TONE_WHISPER
+	})
+
+func _on_player_attack(aim_angle: float, pos: Vector2) -> void:
+	# Free-aim cone hit — direction comes straight from the mouse aim.
+	var facing_angle: float = aim_angle
 
 	_spawn_slash(pos, facing_angle)
 
@@ -334,6 +423,16 @@ func _on_player_attack(facing: int, pos: Vector2) -> void:
 		enemy.take_damage(dmg, pos)
 		_spawn_damage_number(enemy.global_position, dmg)
 		hit_any = true
+	# Boss takes the same cone hit.
+	if boss != null and is_instance_valid(boss) and not boss._dead:
+		var to_boss: Vector2 = boss.global_position - pos
+		if to_boss.length() <= REACH + 24.0:
+			var bang: float = to_boss.angle()
+			var bdiff: float = wrapf(bang - facing_angle, -PI, PI)
+			if abs(bdiff) <= HALF_ARC:
+				boss.take_damage(dmg, pos)
+				_spawn_damage_number(boss.global_position + Vector2(0, -20), dmg)
+				hit_any = true
 	# A connected hit gives a tiny camera kick + brief hitstop so the swing
 	# has weight.
 	if hit_any:

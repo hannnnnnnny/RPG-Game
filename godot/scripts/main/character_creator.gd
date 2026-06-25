@@ -51,7 +51,11 @@ func _on_enter_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/world/MineIntro.tscn")
 
 func _on_continue_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/world/MineIntro.tscn")
+	# Resume where the run left off: 灰灯镇 if the mine is already cleared.
+	if GameState.world_state.flags.get("escaped_mine", false):
+		get_tree().change_scene_to_file("res://scenes/world/TownAshlight.tscn")
+	else:
+		get_tree().change_scene_to_file("res://scenes/world/MineIntro.tscn")
 
 func _on_reset_pressed() -> void:
 	GameState.reset_run()

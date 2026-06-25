@@ -119,6 +119,22 @@ func _build_name(slot: String, quality: String, affixes: Array) -> String:
 		flavor = CATEGORY_FLAVOR.get(best.category, "") + "之"
 	return prefix + flavor + base
 
+# 物品估价：基础强度 × 品质系数 + 词条加成。商店买价 = 估价，卖价 = 40%。
+const QUALITY_MULT := {
+	"broken": 0.6, "common": 1.4, "rare": 3.0,
+	"corrupted": 4.0, "relic": 7.0, "mythic": 12.0
+}
+
+func item_value(item: Dictionary) -> int:
+	var mult: float = QUALITY_MULT.get(item.get("quality", "common"), 1.4)
+	var v: float = float(item.get("item_power", 10)) * mult
+	for a in item.get("affixes", []):
+		v += float(a.get("value", 0)) * 1.5
+	return max(1, int(round(v)))
+
+func sell_value(item: Dictionary) -> int:
+	return max(1, int(item_value(item) * 0.4))
+
 func gold_for_kill(source: String, world_tier: int) -> int:
 	var base: int = 70 if source == "boss" else 24 if source == "elite" else 8
 	return base * world_tier + (randi() % base)

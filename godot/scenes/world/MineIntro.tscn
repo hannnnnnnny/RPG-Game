@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/mine_intro.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/actors/Player.tscn" id="2"]
@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/Inventory.tscn" id="7"]
 [ext_resource type="PackedScene" path="res://scenes/ui/Quest.tscn" id="8"]
 [ext_resource type="PackedScene" path="res://scenes/ui/EventLog.tscn" id="9"]
+[ext_resource type="PackedScene" path="res://scenes/ui/BossBar.tscn" id="12"]
 [ext_resource type="Shader" path="res://assets/shaders/dark_atmosphere.gdshader" id="10"]
 [ext_resource type="Script" path="res://scripts/ui/post_process.gd" id="11"]
 
@@ -69,9 +70,11 @@ offset_top = -28.0
 offset_right = 420.0
 offset_bottom = -8.0
 grow_vertical = 0
-text = "B 背包   M 任务   L 日志   J 攻击   空格 翻滚   E 互动"
+text = "WASD 移动  Shift 奔跑  左键/J 攻击(朝鼠标)  空格 翻滚  E 互动  B/M/L 面板"
 theme_override_colors/font_color = Color(0.62, 0.58, 0.5, 1)
 theme_override_font_sizes/font_size = 12
+
+[node name="BossBar" parent="UILayer" instance=ExtResource("12")]
 
 [node name="Dialogue" parent="UILayer" instance=ExtResource("4")]
 
