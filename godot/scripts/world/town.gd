@@ -25,8 +25,8 @@ const LAMPS := [
 	Vector2(680, 300), Vector2(680, 700)
 ]
 
-@onready var player: Player = $Player
-@onready var npcs_root: Node2D = $Npcs
+@onready var player: Player = $Entities/Player
+@onready var npcs_root: Node2D = $Entities  # y-sorted: NPCs/props/player draw by Y
 @onready var objective_label: Label = $UILayer/Objective
 
 var wall_tiles: Array = []
@@ -227,7 +227,7 @@ func _spawn_follower() -> void:
 	const FollowerScene := preload("res://scenes/actors/Follower.tscn")
 	follower = FollowerScene.instantiate()
 	follower.global_position = player.global_position + Vector2(-40, 10)
-	add_child(follower)
+	npcs_root.add_child(follower)  # y-sorted with the crowd
 
 # ---------- Tile bake (town theme) ----------
 

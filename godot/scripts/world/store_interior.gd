@@ -10,7 +10,8 @@ const STORE_DOOR_IN_TOWN := Vector2(640, 270)  # where you reappear in town
 
 const LIGHT_TEX := preload("res://assets/textures/light_soft.tres")
 
-@onready var player: Player = $Player
+@onready var player: Player = $Entities/Player
+@onready var entities: Node2D = $Entities
 @onready var shop: Control = $UILayer/ShopPanel
 @onready var objective_label: Label = $UILayer/Objective
 
@@ -68,7 +69,7 @@ func _setup_decor() -> void:
 	copper.wander = false  # stays behind the counter
 	copper.lines = PackedStringArray(["走到柜台前，按 E，咱们做笔买卖。"])
 	copper.global_position = Vector2(360, 150)
-	add_child(copper)
+	entities.add_child(copper)
 	# Warm hanging lamp over the counter.
 	var lamp := PointLight2D.new()
 	lamp.texture = LIGHT_TEX
