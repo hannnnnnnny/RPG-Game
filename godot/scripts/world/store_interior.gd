@@ -63,7 +63,9 @@ func _setup_decor() -> void:
 	var copper: TownNpc = NpcScene.instantiate()
 	copper.kind = "merchant"
 	copper.npc_name = "杂货商·铜婶"
-	copper.body_color = Color(0.55, 0.4, 0.22)
+	copper.robe_color = "red"
+	copper.hooded = false
+	copper.wander = false  # stays behind the counter
 	copper.lines = PackedStringArray(["走到柜台前，按 E，咱们做笔买卖。"])
 	copper.global_position = Vector2(360, 150)
 	add_child(copper)
