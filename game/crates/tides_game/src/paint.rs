@@ -79,3 +79,25 @@ pub fn bake(layout: &impl Layout, paint: impl Fn(&mut Canvas, &Cell, Tile)) -> I
     }
     canvas.into_image()
 }
+
+/// Nearest-neighbour downsample so painted portraits/visions read as pixel
+/// art (longest side becomes `low_res` px). Returns None if not RGBA8 data.
+pub fn pixelate(src: &Image, low_res: u32) -> Option<Image> {
+    let (w, h) = (src.width(), src.height());
+    let data = src.data.as_ref()?;
+    if w == 0 || h == 0 || data.len() < (w * h * 4) as usize {
+        return None;
+    }
+    let s = low_res as f32 / w.max(h) as f32;
+    let (nw, nh) = (((w as f32 * s) as u32).max(1), ((h as f32 * s) as u32).max(1));
+    let mut out = Canvas::new(nw, nh);
+    for y in 0..nh {
+        for x in 0..nw {
+            let (sx, sy) = ((x * w / nw).min(w - 1), (y * h / nh).min(h - 1));
+            let i = ((sy * w + sx) * 4) as usize;
+            let o = ((y * nw + x) * 4) as usize;
+            out.data[o..o + 4].copy_from_slice(&data[i..i + 4]);
+        }
+    }
+    Some(out.into_image())
+}
