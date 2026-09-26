@@ -10,7 +10,8 @@ use crate::boss::Boss;
 use crate::camera::MainCamera;
 use crate::coords::{Z_OVERLAY, to_world};
 use crate::enemy::{Enemy, PlayerStruck};
-use crate::player::{Facing, Motion, Player};
+use crate::lpc::{Facing, LpcAnim};
+use crate::player::{Motion, Player};
 use crate::run_state::{GameRng, RunRes};
 
 const ATTACK_COOLDOWN: f32 = 0.34;
@@ -81,13 +82,13 @@ fn swing(
     mouse: Res<ButtonInput<MouseButton>>,
     window: Single<&Window>,
     cam: Single<(&Camera, &GlobalTransform), With<MainCamera>>,
-    mut player: Single<(&Transform, &mut Vitals, &mut Motion), With<Player>>,
+    mut player: Single<(&Transform, &mut Vitals, &Motion, &mut LpcAnim), With<Player>>,
     mut enemies: Query<(&Transform, &mut Enemy), Without<Player>>,
     mut bosses: Query<(&Transform, &mut Boss), (Without<Player>, Without<Enemy>)>,
     run: Res<RunRes>,
     mut rng: ResMut<GameRng>,
 ) {
-    let (ptf, ref mut vitals, ref mut motion) = *player;
+    let (ptf, ref mut vitals, motion, ref mut anim) = *player;
     vitals.attack_timer = (vitals.attack_timer - time.delta_secs()).max(0.0);
     let pressed = mouse.just_pressed(MouseButton::Left) || keys.just_pressed(KeyCode::KeyJ);
     if !pressed || vitals.attack_timer > 0.0 {
@@ -98,8 +99,8 @@ fn swing(
     let aim = cursor_world(&window, *cam)
         .map(|c| c - origin)
         .filter(|v| v.length() > 1.0)
-        .unwrap_or_else(|| motion.facing.vec());
-    motion.facing = Facing::from_vec(aim);
+        .unwrap_or_else(|| anim.facing.vec());
+    anim.facing = Facing::from_vec(aim);
     spawn_slash(&mut commands, origin + Vec2::Y * 16.0, aim.to_angle());
     let stats = run.stats();
     let in_cone = |target: Vec2, reach: f32| {
