@@ -23,6 +23,8 @@ func _ready() -> void:
 	GameState.world_state_changed.connect(func(_p, _v): _refresh_if_open())
 
 func open() -> void:
+	if visible:
+		return  # E pressed again at the anvil — keep the current state
 	visible = true
 	_confirm_salvage = false
 	if GameState.find_item(_selected_id).is_empty():
