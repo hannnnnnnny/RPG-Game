@@ -4,6 +4,7 @@
 use bevy::prelude::*;
 use tides_core::areas::Mine;
 
+use crate::area::Area;
 use crate::coords::to_world;
 use crate::paint::Canvas;
 use crate::physics::{Body, Velocity, YSort};
@@ -55,7 +56,8 @@ pub struct EnemyArt(pub Handle<Image>);
 
 pub fn plugin(app: &mut App) {
     app.add_message::<PlayerStruck>()
-        .add_systems(Startup, (load_art, spawn_mine_enemies).chain())
+        .add_systems(Startup, load_art)
+        .add_systems(OnEnter(Area::Mine), spawn_mine_enemies)
         .add_systems(Update, (think, flash));
 }
 
@@ -65,13 +67,14 @@ fn load_art(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
 
 fn spawn_mine_enemies(mut commands: Commands, art: Res<EnemyArt>) {
     for p in Mine::ENEMIES {
-        spawn(&mut commands, &art.0, to_world(p));
+        spawn(&mut commands, &art.0, to_world(p), Area::Mine);
     }
 }
 
-pub fn spawn(commands: &mut Commands, image: &Handle<Image>, at: Vec2) {
+pub fn spawn(commands: &mut Commands, image: &Handle<Image>, at: Vec2, area: Area) {
     commands.spawn((
         Enemy::default(),
+        DespawnOnExit(area),
         Velocity::default(),
         Body { half: Vec2::new(9.0, 5.0) },
         YSort,

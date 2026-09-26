@@ -71,16 +71,20 @@ struct Darkness(Handle<LightingMaterial>);
 pub fn plugin(app: &mut App) {
     app.add_plugins(Material2dPlugin::<LightingMaterial>::default())
         .insert_resource(Ambient { color: Color::srgb(0.03, 0.02, 0.06), darkness: 0.74 })
-        .add_systems(PostStartup, spawn_darkness)
-        .add_systems(Update, update_lights);
+        .add_systems(Update, (spawn_darkness.run_if(resource_changed::<AreaBounds>), update_lights).chain());
 }
 
+/// One darkness quad sized to the current area; replaced on area change.
 fn spawn_darkness(
     mut commands: Commands,
+    old: Query<Entity, With<Darkness>>,
     bounds: Res<AreaBounds>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<LightingMaterial>>,
 ) {
+    for e in &old {
+        commands.entity(e).despawn();
+    }
     let size = bounds.0;
     let mat = materials.add(LightingMaterial {
         u: LightingUniform {
@@ -92,7 +96,6 @@ fn spawn_darkness(
     });
     commands.spawn((
         Darkness(mat.clone()),
-        crate::area::AreaEntity,
         Mesh2d(meshes.add(Rectangle::new(size.x, size.y))),
         MeshMaterial2d(mat),
         Transform::from_xyz(size.x / 2.0, -size.y / 2.0, Z_OVERLAY - 5.0),

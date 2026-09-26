@@ -7,6 +7,7 @@ use tides_core::areas::Mine;
 use tides_core::story::mine::{self, Spot};
 use tides_core::world::DwarfChoice;
 
+use crate::area::Area;
 use crate::beats::PlayBeat;
 use crate::coords::{Z_OVERLAY, to_world};
 use crate::dialogue::InteractPressed;
@@ -26,7 +27,8 @@ pub struct SpotC(pub Spot);
 struct Prompt;
 
 pub fn plugin(app: &mut App) {
-    app.add_systems(Startup, (spawn_spots, spawn_prompt))
+    app.add_systems(Startup, spawn_prompt)
+        .add_systems(OnEnter(Area::Mine), (spawn_spots, queue_intro))
         .add_systems(Update, (intro, interact, update_prompt, retire_spent));
 }
 
@@ -39,7 +41,7 @@ fn spawn_spots(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
     for (spot, at, light) in defs {
         commands.spawn((
             SpotC(spot),
-            crate::area::AreaEntity,
+            DespawnOnExit(Area::Mine),
             Sprite::from_image(images.add(spot_image(spot))),
             Anchor::BOTTOM_CENTER,
             YSort,
@@ -109,10 +111,19 @@ fn interact(
     }
 }
 
-/// 克哈's opening whisper, on the first frame the world is running.
-fn intro(mut done: Local<bool>, run: Res<RunRes>, mut beats: MessageWriter<PlayBeat>) {
-    if !*done {
-        *done = true;
+/// Set on entering the mine; the whisper plays on the next Update so the
+/// message isn't lost across the state transition.
+#[derive(Resource)]
+struct IntroPending;
+
+fn queue_intro(mut commands: Commands) {
+    commands.insert_resource(IntroPending);
+}
+
+/// 克哈's whisper each time you (re-)enter the mine.
+fn intro(mut commands: Commands, pending: Option<Res<IntroPending>>, run: Res<RunRes>, mut beats: MessageWriter<PlayBeat>) {
+    if pending.is_some() {
+        commands.remove_resource::<IntroPending>();
         beats.write(PlayBeat(mine::on_enter(&run)));
     }
 }

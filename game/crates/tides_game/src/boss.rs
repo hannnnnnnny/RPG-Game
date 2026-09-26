@@ -8,6 +8,7 @@ use tides_core::boss::{self, Grom, Move, State};
 use tides_core::story::mine;
 use tides_core::world::Flag;
 
+use crate::area::Area;
 use crate::beats::{PlayBeat, SpawnBoss};
 use crate::combat::Respawn;
 use crate::coords::{Z_OVERLAY, to_world};
@@ -40,7 +41,8 @@ struct BossBarFill;
 
 pub fn plugin(app: &mut App) {
     app.add_systems(Startup, spawn_bar)
-        .add_systems(Update, (spawn_on_signal, spawn_on_load, think, flash, reap, expand_waves, update_bar));
+        .add_systems(OnEnter(Area::Mine), spawn_on_load)
+        .add_systems(Update, (spawn_on_signal, think, flash, reap, expand_waves, update_bar));
 }
 
 fn spawn_on_signal(
@@ -60,15 +62,11 @@ fn spawn_on_signal(
 
 /// A save made after the totem but before the kill still has him waiting.
 fn spawn_on_load(
-    mut done: Local<bool>,
     run: Res<RunRes>,
     mut commands: Commands,
     mut images: ResMut<Assets<Image>>,
     mut respawn: ResMut<Respawn>,
 ) {
-    if std::mem::replace(&mut *done, true) {
-        return;
-    }
     let w = &run.world;
     if w.has(Flag::TouchedTotemFragment) {
         respawn.0 = to_world(Mine::TOTEM_CHECKPOINT);
@@ -81,7 +79,7 @@ fn spawn_on_load(
 fn spawn(commands: &mut Commands, images: &mut Assets<Image>) {
     commands.spawn((
         Boss { brain: Grom::default(), lunge_dir: Vec2::X, flash: 0.0 },
-        crate::area::AreaEntity,
+        DespawnOnExit(Area::Mine),
         Velocity::default(),
         Body { half: Vec2::new(14.0, 6.0) },
         YSort,
@@ -124,7 +122,7 @@ fn think(
         }
         if intent.summon {
             for off in [Vec2::new(-70.0, 40.0), Vec2::new(70.0, 40.0)] {
-                enemy::spawn(&mut commands, &art.0, pos + off);
+                enemy::spawn(&mut commands, &art.0, pos + off, Area::Mine);
             }
         }
     }
