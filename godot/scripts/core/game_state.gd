@@ -194,6 +194,72 @@ func remove_item(item_id: String) -> Dictionary:
 			return item
 	return {}
 
+# ============ Forge actions (rules live in Forge; this pays + stores) ============
+
+var _forge_rng := RandomNumberGenerator.new()
+
+func find_item(item_id: String) -> Dictionary:
+	for item in inventory:
+		if item.id == item_id:
+			return item
+	return {}
+
+func _replace_item(updated: Dictionary) -> void:
+	for i in range(inventory.size()):
+		if inventory[i].id == updated.id:
+			inventory[i] = updated
+			break
+	emit_signal("inventory_changed", inventory)
+	if equipped.get(updated.slot, "") == updated.id:
+		emit_equipment_changed()
+	_schedule_save()
+
+func forge_upgrade(item_id: String) -> bool:
+	var item := find_item(item_id)
+	if item.is_empty() or not Forge.can_upgrade(item):
+		return false
+	if not spend_gold(Forge.upgrade_cost(item)):
+		return false
+	var out := Forge.upgraded(item)
+	_replace_item(out)
+	_log("强化 %s → +%d" % [item.name, out.upgrade_level])
+	return true
+
+## Pays for a reroll and returns the offered affix ({} if not allowed).
+## Must be followed by forge_resolve_reroll to keep or take the offer.
+func forge_reroll_offer(item_id: String, affix_index: int) -> Dictionary:
+	var item := find_item(item_id)
+	if item.is_empty() or not Forge.can_reroll(item, affix_index):
+		return {}
+	if not spend_gold(Forge.reroll_cost(item)):
+		return {}
+	return Forge.reroll_offer(item, _forge_rng)
+
+func forge_resolve_reroll(item_id: String, affix_index: int, offer: Dictionary, accept: bool) -> void:
+	var item := find_item(item_id)
+	if item.is_empty():
+		return
+	_replace_item(Forge.resolve_reroll(item, affix_index, offer, accept))
+	_log("重铸 %s：%s" % [item.name, "接受新词条" if accept else "保留旧词条"])
+
+func forge_lock(item_id: String, affix_index: int) -> bool:
+	var item := find_item(item_id)
+	if item.is_empty() or not spend_materials(Forge.LOCK_MATERIAL):
+		return false
+	_replace_item(Forge.locked(item, affix_index))
+	_log("锁定 %s 的一条词条。" % item.name)
+	return true
+
+## Breaks an item into materials; returns what was gained.
+func salvage_item(item_id: String) -> Dictionary:
+	var item := remove_item(item_id)
+	if item.is_empty():
+		return {}
+	var gained := Forge.salvage_yield(item)
+	add_materials(gained)
+	_log("分解 %s。" % item.name)
+	return gained
+
 # Kept as an alias of StatCalc.BASE_ATTACK for older callers.
 const BASE_ATTACK := StatCalc.BASE_ATTACK
 
