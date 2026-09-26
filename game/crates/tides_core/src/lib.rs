@@ -6,3 +6,4 @@
 pub mod item;
 pub mod stats;
 pub mod combat;
+pub mod loot;
