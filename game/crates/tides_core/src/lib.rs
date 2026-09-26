@@ -4,3 +4,4 @@
 //! without Bevy and reused by any front end (game, tools, balance sims).
 
 pub mod item;
+pub mod stats;
