@@ -332,7 +332,11 @@ func _check_tier_crossing(meter: String, before: int, after: int) -> void:
 		return MindState.sanity_tier(v) if meter == "sanity" else MindState.corruption_tier(v)
 	if meter == "parasite_load" or tier_of.call(before).id == tier_of.call(after).id:
 		return
-	emit_signal("mind_tier_changed", meter, tier_of.call(after))
+	var tier: Dictionary = tier_of.call(after)
+	var label := "理智" if meter == "sanity" else "污染"
+	var dir := "跌入" if (meter == "sanity") == (after < before) else "回到"
+	_log("%s%s「%s」。%s" % [label, dir, tier.name, tier.get("hint", "")])
+	emit_signal("mind_tier_changed", meter, tier)
 
 func _set_path(path: String, value: Variant) -> void:
 	if path.begins_with("flags."):

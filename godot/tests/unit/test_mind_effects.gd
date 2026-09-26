@@ -35,3 +35,10 @@ func test_tier_crossing_emits_once() -> void:
 	assert_eq(crossed, [], "still stable")
 	GameState.change_meter("sanity", -5)
 	assert_eq(crossed, [["sanity", "shaken"]], "crossed into 动摇")
+
+func test_tier_crossing_is_logged() -> void:
+	GameState.world_state.sanity = 50
+	GameState.change_meter("sanity", -1)
+	assert_true(GameState.log[0].begins_with("理智跌入「破裂」"), GameState.log[0])
+	GameState.change_meter("sanity", 20)
+	assert_true(GameState.log[0].begins_with("理智回到「动摇」"), GameState.log[0])
