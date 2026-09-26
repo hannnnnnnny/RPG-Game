@@ -25,6 +25,7 @@ mod player;
 mod run_state;
 mod tiles_mine;
 mod tiles_town;
+mod townsfolk;
 mod ui;
 
 fn main() {
@@ -45,7 +46,7 @@ fn main() {
         // Engine-level services, then world/gameplay, then presentation.
         .add_plugins((ui::plugin, run_state::plugin, pixelated::plugin, lpc::plugin, devtools::plugin))
         .add_plugins((area::plugin, physics::plugin, lighting::plugin, camera::plugin))
-        .add_plugins((player::plugin, enemy::plugin, boss::plugin, combat::plugin, spots::plugin))
+        .add_plugins((player::plugin, enemy::plugin, boss::plugin, combat::plugin, spots::plugin, townsfolk::plugin))
         .add_plugins((beats::plugin, dialogue::plugin, modal::plugin, hud::plugin, interact::plugin))
         .run();
 }
