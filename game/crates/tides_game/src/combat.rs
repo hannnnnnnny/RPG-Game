@@ -51,7 +51,7 @@ struct Slash {
 
 pub fn plugin(app: &mut App) {
     app.insert_resource(Respawn(to_world(Mine::PLAYER_START)))
-        .add_systems(Update, (sync_stats, swing, take_hits, reap_enemies, float_up, fade_slash));
+        .add_systems(Update, (sync_stats, swing.run_if(crate::beats::no_modal), take_hits, reap_enemies, float_up, fade_slash));
 }
 
 /// Loadout stats → max HP and stamina regen, only when the run changed.

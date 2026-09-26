@@ -134,10 +134,16 @@ fn spawn_player(
         });
 }
 
-fn read_input(keys: Res<ButtonInput<KeyCode>>, time: Res<Time>, mut q: Query<(&mut Motion, &mut Velocity), With<Player>>) {
+fn read_input(
+    keys: Res<ButtonInput<KeyCode>>,
+    time: Res<Time>,
+    modal: Res<crate::beats::Modal>,
+    mut q: Query<(&mut Motion, &mut Velocity), With<Player>>,
+) {
     let dt = time.delta_secs();
     for (mut m, mut vel) in &mut q {
-        let dir = input_dir(&keys);
+        // Story modals freeze the player in place.
+        let dir = if modal.is_open() { Vec2::ZERO } else { input_dir(&keys) };
         m.moving = dir != Vec2::ZERO;
         if m.moving {
             m.facing = Facing::from_vec(dir);
