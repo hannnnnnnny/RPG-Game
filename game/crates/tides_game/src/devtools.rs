@@ -7,10 +7,11 @@
 use bevy::prelude::*;
 use bevy::render::view::screenshot::{Screenshot, save_to_disk};
 use tides_core::areas::Mine;
+use tides_core::loot::{self, DropSource};
 use tides_core::story::mine::{self, Spot};
 
 use crate::area::Area;
-use crate::beats::{DialogueQueue, PlayBeat, SpawnBoss};
+use crate::beats::{DialogueQueue, MenuTab, Modal, PlayBeat, SpawnBoss};
 use crate::coords::to_world;
 use crate::player::Player;
 use crate::run_state::RunRes;
@@ -43,6 +44,7 @@ fn stage(
     mut boss: MessageWriter<SpawnBoss>,
     mut player: Single<&mut Transform, With<Player>>,
     mut next_area: ResMut<NextState<Area>>,
+    mut modal: ResMut<Modal>,
 ) {
     if *done || time.elapsed_secs() < STAGE_AT {
         return;
@@ -50,6 +52,18 @@ fn stage(
     *done = true;
     let Ok(name) = std::env::var("TIDES_STAGE") else { return };
     queue.0.clear();
+    if name == "menu" || name == "journal" {
+        let mut rng = fastrand::Rng::with_seed(7);
+        for src in [DropSource::Elite, DropSource::Totem, DropSource::Enemy, DropSource::Enemy, DropSource::Elite] {
+            let item = loot::generate(src, 1, &mut rng);
+            run.add_item(item);
+        }
+        let first = run.inventory[0].id;
+        let _ = run.equip(first);
+        run.world.gold = 1284;
+        *modal = Modal::Menu(if name == "menu" { MenuTab::Bag } else { MenuTab::Journal });
+        return;
+    }
     if name == "town" {
         next_area.set(Area::Town);
         return;

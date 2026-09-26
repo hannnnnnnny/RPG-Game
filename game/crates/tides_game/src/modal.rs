@@ -41,7 +41,8 @@ fn rebuild(
     }
     let root = commands.spawn(backdrop()).id();
     match &*modal {
-        Modal::None => {
+        // Menus draw themselves (menu.rs / forge_ui.rs).
+        Modal::None | Modal::Menu(_) | Modal::Forge => {
             commands.entity(root).despawn();
         }
         Modal::Choice(c) => {

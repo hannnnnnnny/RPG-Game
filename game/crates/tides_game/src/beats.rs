@@ -29,6 +29,18 @@ pub enum Modal {
     None,
     Choice(Choice),
     Vision(Vision),
+    /// The Stardew-style game menu (Tab / I).
+    Menu(MenuTab),
+    /// 老锤's anvil.
+    Forge,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum MenuTab {
+    #[default]
+    Bag,
+    Journal,
+    Log,
 }
 
 impl Modal {

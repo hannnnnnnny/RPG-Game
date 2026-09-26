@@ -20,6 +20,7 @@ mod interact;
 mod item_icons;
 mod lighting;
 mod lpc;
+mod menu;
 mod paint;
 mod physics;
 mod player;
@@ -49,6 +50,6 @@ fn main() {
         .add_plugins((ui::plugin, run_state::plugin, pixelated::plugin, lpc::plugin, item_icons::plugin, devtools::plugin))
         .add_plugins((area::plugin, physics::plugin, lighting::plugin, camera::plugin))
         .add_plugins((player::plugin, enemy::plugin, boss::plugin, combat::plugin, spots::plugin, townsfolk::plugin))
-        .add_plugins((beats::plugin, dialogue::plugin, modal::plugin, hud::plugin, interact::plugin))
+        .add_plugins((beats::plugin, dialogue::plugin, modal::plugin, hud::plugin, interact::plugin, menu::plugin))
         .run();
 }
