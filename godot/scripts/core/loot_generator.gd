@@ -35,21 +35,11 @@ const CATEGORY_FLAVOR := {
 	"economy": "贪婪"
 }
 
-const AFFIX_POOL := [
-	{"label": "近战伤害", "category": "attack"},
-	{"label": "暴击率", "category": "attack"},
-	{"label": "对感染者伤害", "category": "attack"},
-	{"label": "最大生命", "category": "defense"},
-	{"label": "黑潮抗性", "category": "defense"},
-	{"label": "翻滚后伤害", "category": "mobility"},
-	{"label": "体力回复", "category": "mobility"},
-	{"label": "禁忌法术伤害", "category": "forbidden"},
-	{"label": "理智稳定", "category": "vessel"},
-	{"label": "金币掉落", "category": "economy"}
-]
+
+var _rng := RandomNumberGenerator.new()
 
 func _random_id(prefix: String) -> String:
-	return "%s_%x_%x" % [prefix, Time.get_ticks_msec(), randi()]
+	return AffixTable.random_id(prefix, _rng)
 
 func _pick(arr: Array) -> Variant:
 	return arr[randi() % arr.size()]
@@ -80,14 +70,7 @@ func generate_loot(source: String, world_tier: int) -> Dictionary:
 	var affixes: Array = []
 
 	for i in range(_affix_count(quality)):
-		var template: Dictionary = _pick(AFFIX_POOL)
-		var value: int = max(2, int(item_power * (0.4 + randf() * 0.7)))
-		affixes.push_back({
-			"id": _random_id("affix_%d" % i),
-			"label": template.label,
-			"category": template.category,
-			"value": value
-		})
+		affixes.push_back(AffixTable.roll(item_power, _rng))
 
 	var core_effect := ""
 	if source == "totem":
