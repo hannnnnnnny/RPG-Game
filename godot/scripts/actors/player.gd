@@ -31,6 +31,8 @@ var sprinting: bool = false
 # Loadout-derived (see StatCalc); refreshed on GameState.stats_changed.
 var stamina_regen: float = StatCalc.BASE_STAMINA_REGEN
 var damage_reduction: float = 0.0
+# Seconds since the last dodge roll ended; drives 翻滚后伤害.
+var since_roll: float = 99.0
 
 @onready var sprite: AnimatedSprite2D = $Sprite
 
@@ -54,6 +56,7 @@ func _apply_stats(stats: Dictionary) -> void:
 func _physics_process(delta: float) -> void:
 	roll_timer = max(0.0, roll_timer - delta)
 	attack_timer = max(0.0, attack_timer - delta)
+	since_roll = 0.0 if roll_timer > 0.0 else since_roll + delta
 
 	var input := Vector2.ZERO
 	input.x = Input.get_axis("move_left", "move_right")
