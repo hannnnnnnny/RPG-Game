@@ -4,6 +4,11 @@
 use bevy::prelude::*;
 
 mod area;
+mod spots;
+mod pixelated;
+mod modal;
+mod dialogue;
+mod beats;
 mod camera;
 mod combat;
 mod coords;
@@ -33,18 +38,10 @@ fn main() {
                 }),
         )
         .insert_resource(ClearColor(Color::srgb(0.05, 0.04, 0.06)))
-        .add_plugins((
-            ui::plugin,
-            run_state::plugin,
-            area::plugin,
-            physics::plugin,
-            player::plugin,
-            camera::plugin,
-            enemy::plugin,
-            combat::plugin,
-            hud::plugin,
-            lighting::plugin,
-            devtools::plugin,
-        ))
+        // Engine-level services, then world/gameplay, then presentation.
+        .add_plugins((ui::plugin, run_state::plugin, pixelated::plugin, devtools::plugin))
+        .add_plugins((area::plugin, physics::plugin, lighting::plugin, camera::plugin))
+        .add_plugins((player::plugin, enemy::plugin, combat::plugin, spots::plugin))
+        .add_plugins((beats::plugin, dialogue::plugin, modal::plugin, hud::plugin))
         .run();
 }

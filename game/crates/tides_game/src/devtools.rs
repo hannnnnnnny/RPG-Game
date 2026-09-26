@@ -6,6 +6,13 @@
 
 use bevy::prelude::*;
 use bevy::render::view::screenshot::{Screenshot, save_to_disk};
+use tides_core::areas::Mine;
+use tides_core::story::mine::{self, Spot};
+
+use crate::beats::{DialogueQueue, PlayBeat};
+use crate::coords::to_world;
+use crate::player::Player;
+use crate::run_state::RunRes;
 
 const CAPTURE_AT: f32 = 2.5;
 const QUIT_AT: f32 = 3.5;
@@ -20,10 +27,36 @@ pub fn plugin(app: &mut App) {
     if let Ok(path) = std::env::var("TIDES_CAPTURE") {
         app.insert_resource(Capture { path, taken: false }).add_systems(Update, capture);
     }
+    app.add_systems(Update, stage);
 }
 
-pub fn stage_name() -> Option<String> {
-    std::env::var("TIDES_STAGE").ok()
+const STAGE_AT: f32 = 1.0;
+
+/// Drive the story into a named state, once, shortly after start.
+fn stage(
+    time: Res<Time>,
+    mut done: Local<bool>,
+    mut run: ResMut<RunRes>,
+    mut queue: ResMut<DialogueQueue>,
+    mut beats: MessageWriter<PlayBeat>,
+    mut player: Single<&mut Transform, With<Player>>,
+) {
+    if *done || time.elapsed_secs() < STAGE_AT {
+        return;
+    }
+    *done = true;
+    let Ok(name) = std::env::var("TIDES_STAGE") else { return };
+    queue.0.clear();
+    let (spot, at) = match name.as_str() {
+        "choice" => (Spot::InjuredDwarf, Mine::INJURED_DWARF),
+        "vision" => (Spot::TotemFragment, Mine::TOTEM),
+        "exit" => (Spot::Exit, Mine::EXIT),
+        _ => return,
+    };
+    let p = to_world((at.0 - 40.0, at.1 + 10.0));
+    player.translation.x = p.x;
+    player.translation.y = p.y;
+    beats.write(PlayBeat(mine::interact(&mut run, spot)));
 }
 
 fn capture(mut commands: Commands, time: Res<Time>, mut cap: ResMut<Capture>, mut exit: MessageWriter<AppExit>) {
