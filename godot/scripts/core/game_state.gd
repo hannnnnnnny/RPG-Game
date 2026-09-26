@@ -15,6 +15,8 @@ signal vision_opened(image_path: String, caption: String)
 signal vision_closed()
 signal log_appended(entry: String)
 signal materials_changed(materials: Dictionary)
+## A meter crossed into a new named tier (MindState). tier = the new tier dict.
+signal mind_tier_changed(meter: String, tier: Dictionary)
 
 var profile: Dictionary = {}
 var world_state: Dictionary = {}
@@ -299,10 +301,38 @@ func request_state_change(request: Dictionary) -> bool:
 		return false
 
 	for effect in request.effects:
-		_set_path(effect.path, effect.value)
+		_apply_effect(effect)
 	_log("世界状态变更：%s" % request.type)
 	_schedule_save()
 	return true
+
+# 0–100 meters that accept relative {"delta": n} effects.
+const METERS := ["sanity", "corruption", "parasite_load"]
+
+## An effect is {"path", "value"} (absolute) or {"path", "delta"} (relative,
+## meters only). Deltas are clamped, and sanity losses are softened by 理智稳定.
+func _apply_effect(effect: Dictionary) -> void:
+	if effect.has("delta"):
+		change_meter(effect.path, int(effect.delta))
+	else:
+		_set_path(effect.path, effect.value)
+
+func change_meter(meter: String, delta: int) -> void:
+	if not meter in METERS:
+		push_warning("Not a meter: %s" % meter)
+		return
+	if meter == "sanity":
+		delta = MindState.soften_loss(delta, int(get_stats().sanity_guard))
+	var before := int(world_state.get(meter, 0))
+	_set_path(meter, MindState.clamp_meter(before + delta))
+	_check_tier_crossing(meter, before, int(world_state[meter]))
+
+func _check_tier_crossing(meter: String, before: int, after: int) -> void:
+	var tier_of := func(v: int) -> Dictionary:
+		return MindState.sanity_tier(v) if meter == "sanity" else MindState.corruption_tier(v)
+	if meter == "parasite_load" or tier_of.call(before).id == tier_of.call(after).id:
+		return
+	emit_signal("mind_tier_changed", meter, tier_of.call(after))
 
 func _set_path(path: String, value: Variant) -> void:
 	if path.begins_with("flags."):
