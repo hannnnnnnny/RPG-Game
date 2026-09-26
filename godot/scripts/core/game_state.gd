@@ -14,12 +14,15 @@ signal choice_closed()
 signal vision_opened(image_path: String, caption: String)
 signal vision_closed()
 signal log_appended(entry: String)
+signal materials_changed(materials: Dictionary)
 
 var profile: Dictionary = {}
 var world_state: Dictionary = {}
 var combat: Dictionary = {}
 var inventory: Array = []
 var equipped: Dictionary = {}
+# Crafting materials, material id -> count (ids in Forge.MATERIAL_NAMES).
+var materials: Dictionary = {}
 var dialogue: Dictionary = {}
 var active_choice: Dictionary = {}
 var vision: Dictionary = {}
@@ -71,6 +74,7 @@ func _reset_to_defaults() -> void:
 	combat = Types.make_default_combat()
 	inventory = []
 	equipped = {}
+	materials = {}
 	dialogue = {}
 	active_choice = {}
 	vision = {}
@@ -144,6 +148,28 @@ func add_gold(amount: int) -> void:
 func add_kill_gold(source: String) -> void:
 	var base := LootGenerator.gold_for_kill(source, int(world_state.world_tier))
 	add_gold(CombatMath.apply_gold_find(base, get_stats()))
+
+func add_materials(gained: Dictionary) -> void:
+	for id in gained:
+		materials[id] = int(materials.get(id, 0)) + int(gained[id])
+	emit_signal("materials_changed", materials)
+	_schedule_save()
+
+func has_materials(cost: Dictionary) -> bool:
+	for id in cost:
+		if int(materials.get(id, 0)) < int(cost[id]):
+			return false
+	return true
+
+## Deducts materials only if every one is affordable; returns success.
+func spend_materials(cost: Dictionary) -> bool:
+	if not has_materials(cost):
+		return false
+	for id in cost:
+		materials[id] = int(materials[id]) - int(cost[id])
+	emit_signal("materials_changed", materials)
+	_schedule_save()
+	return true
 
 # Spend gold if affordable; returns success.
 func spend_gold(amount: int) -> bool:
@@ -219,6 +245,7 @@ func reset_run() -> void:
 	emit_signal("combat_changed", combat)
 	emit_signal("inventory_changed", inventory)
 	emit_equipment_changed()
+	emit_signal("materials_changed", materials)
 
 func _log(entry: String) -> void:
 	log.push_front(entry)

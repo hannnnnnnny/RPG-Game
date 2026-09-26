@@ -12,6 +12,7 @@ func save() -> void:
 	cfg.set_value("game", "combat", GameState.combat)
 	cfg.set_value("game", "inventory", GameState.inventory)
 	cfg.set_value("game", "equipped", GameState.equipped)
+	cfg.set_value("game", "materials", GameState.materials)
 	cfg.set_value("game", "log", GameState.log)
 	var err := cfg.save(SAVE_PATH)
 	if err != OK:
@@ -27,12 +28,14 @@ func load_save() -> bool:
 	GameState.combat = cfg.get_value("game", "combat", Types.make_default_combat())
 	GameState.inventory = cfg.get_value("game", "inventory", [])
 	GameState.equipped = cfg.get_value("game", "equipped", {})
+	GameState.materials = cfg.get_value("game", "materials", {})
 	GameState.log = cfg.get_value("game", "log", [])
 	GameState.emit_signal("profile_changed", GameState.profile)
 	GameState.emit_signal("world_state_changed", "*", null)
 	GameState.emit_signal("combat_changed", GameState.combat)
 	GameState.emit_signal("inventory_changed", GameState.inventory)
 	GameState.emit_equipment_changed()
+	GameState.emit_signal("materials_changed", GameState.materials)
 	return true
 
 func has_save() -> bool:

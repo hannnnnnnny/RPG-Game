@@ -31,3 +31,13 @@ func test_kill_gold_is_boosted_by_gold_find() -> void:
 	seed(7)
 	GameState.add_kill_gold("enemy")
 	assert_eq(GameState.world_state.gold, plain * 2, "100% gold find doubles gold")
+
+func test_materials_add_and_spend() -> void:
+	GameState.add_materials({"common_mat": 3, "rare_mat": 1})
+	assert_true(GameState.spend_materials({"common_mat": 2}), "affordable")
+	assert_eq(GameState.materials.common_mat, 1, "deducted")
+
+func test_spend_materials_is_all_or_nothing() -> void:
+	GameState.add_materials({"common_mat": 5})
+	assert_false(GameState.spend_materials({"common_mat": 1, "rare_mat": 1}), "missing rare")
+	assert_eq(GameState.materials.common_mat, 5, "nothing deducted")
