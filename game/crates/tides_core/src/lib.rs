@@ -13,3 +13,4 @@ pub mod world;
 pub mod aidlc;
 pub mod run;
 pub mod save;
+pub mod map;

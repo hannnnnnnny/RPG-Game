@@ -9,4 +9,5 @@ license.workspace = true
 workspace = true
 
 [dependencies]
+bevy = "0.19.1"
 tides_core = { path = "../tides_core" }
