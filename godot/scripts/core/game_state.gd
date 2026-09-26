@@ -6,6 +6,7 @@ signal world_state_changed(path: String, value: Variant)
 signal combat_changed(combat: Dictionary)
 signal inventory_changed(inventory: Array)
 signal equipped_changed(equipped: Dictionary)
+signal stats_changed(stats: Dictionary)
 signal dialogue_opened(speaker: String, text: String, tone: String)
 signal dialogue_closed()
 signal choice_opened(choice: Dictionary)
@@ -128,7 +129,7 @@ func equip_item(item_id: String) -> void:
 	for item in inventory:
 		if item.id == item_id:
 			equipped[item.slot] = item.id
-			emit_signal("equipped_changed", equipped)
+			emit_equipment_changed()
 			_log("装备:%s" % item.name)
 			_schedule_save()
 			return
@@ -156,28 +157,26 @@ func remove_item(item_id: String) -> Dictionary:
 			inventory.remove_at(i)
 			if equipped.get(item.slot, "") == item_id:
 				equipped.erase(item.slot)
-				emit_signal("equipped_changed", equipped)
+				emit_equipment_changed()
 			emit_signal("inventory_changed", inventory)
 			_schedule_save()
 			return item
 	return {}
 
-# 玩家近战攻击力：空手基础 8，装备主手武器时加上其 attack 类词条之和。
-# 例：空手 8 → 打 20 血怪需 3 下，不秒杀。装好武器后更高。
-const BASE_ATTACK := 8
+# Kept as an alias of StatCalc.BASE_ATTACK for older callers.
+const BASE_ATTACK := StatCalc.BASE_ATTACK
+
+## Combat stats derived from the whole loadout (see StatCalc).
+func get_stats() -> Dictionary:
+	return StatCalc.derive(inventory, equipped)
+
+## Equipment and the stats derived from it always change together.
+func emit_equipment_changed() -> void:
+	emit_signal("equipped_changed", equipped)
+	emit_signal("stats_changed", get_stats())
 
 func get_attack_power() -> int:
-	var weapon_id: String = equipped.get(Types.SLOT_MAIN_HAND, "")
-	if weapon_id == "":
-		return BASE_ATTACK
-	for item in inventory:
-		if item.id == weapon_id:
-			var bonus := 0
-			for affix in item.affixes:
-				if affix.category == Types.AFFIX_ATTACK:
-					bonus += int(affix.value)
-			return BASE_ATTACK + bonus
-	return BASE_ATTACK
+	return int(get_stats().attack)
 
 func request_state_change(request: Dictionary) -> bool:
 	var decision: Dictionary = AidlcRules.approve_state_change(request, world_state)
@@ -214,7 +213,7 @@ func reset_run() -> void:
 	emit_signal("world_state_changed", "*", null)
 	emit_signal("combat_changed", combat)
 	emit_signal("inventory_changed", inventory)
-	emit_signal("equipped_changed", equipped)
+	emit_equipment_changed()
 
 func _log(entry: String) -> void:
 	log.push_front(entry)

@@ -32,7 +32,7 @@ func load_save() -> bool:
 	GameState.emit_signal("world_state_changed", "*", null)
 	GameState.emit_signal("combat_changed", GameState.combat)
 	GameState.emit_signal("inventory_changed", GameState.inventory)
-	GameState.emit_signal("equipped_changed", GameState.equipped)
+	GameState.emit_equipment_changed()
 	return true
 
 func has_save() -> bool:
