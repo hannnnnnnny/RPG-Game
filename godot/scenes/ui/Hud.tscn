@@ -57,7 +57,7 @@ script = ExtResource("1")
 offset_left = 12.0
 offset_top = 12.0
 offset_right = 184.0
-offset_bottom = 196.0
+offset_bottom = 200.0
 theme_override_styles/panel = SubResource("glass")
 
 [node name="VBox" type="VBoxContainer" parent="Panel"]
@@ -98,6 +98,10 @@ value = 30.0
 show_percentage = false
 theme_override_styles/background = SubResource("bar_bg")
 theme_override_styles/fill = SubResource("fill_focus")
+
+[node name="SanityLabel" type="Label" parent="Panel/VBox"]
+text = "理智 0"
+theme_override_font_sizes/font_size = 12
 
 [node name="Stats" type="HBoxContainer" parent="Panel/VBox"]
 theme_override_constants/separation = 10
