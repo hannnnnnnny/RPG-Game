@@ -69,3 +69,36 @@ static func locked(item: Dictionary, affix_index: int) -> Dictionary:
 	if affix_index >= 0 and affix_index < affixes.size():
 		out["locked_affix_id"] = affixes[affix_index].get("id", "")
 	return out
+
+# ---------------- Salvage ----------------
+
+const MAT_COMMON := "common_mat"
+const MAT_RARE := "rare_mat"
+const MAT_RESIDUE := "corrupt_residue"
+
+const MATERIAL_NAMES := {
+	MAT_COMMON: "普通材料",
+	MAT_RARE: "稀有材料",
+	MAT_RESIDUE: "污染残渣",
+}
+
+## Locking an affix consumes this (design: 锁定需要高级材料).
+const LOCK_MATERIAL := {MAT_RARE: 1}
+
+const SALVAGE_TABLE := {
+	"broken": {MAT_COMMON: 1},
+	"common": {MAT_COMMON: 2},
+	"rare": {MAT_COMMON: 3, MAT_RARE: 1},
+	"corrupted": {MAT_COMMON: 2, MAT_RARE: 1, MAT_RESIDUE: 2},
+	"relic": {MAT_COMMON: 4, MAT_RARE: 3},
+	"mythic": {MAT_COMMON: 6, MAT_RARE: 5},
+}
+
+## Materials returned for breaking an item down. Half of its upgrade
+## levels come back as common materials so upgrading isn't a dead end.
+static func salvage_yield(item: Dictionary) -> Dictionary:
+	var out: Dictionary = SALVAGE_TABLE.get(item.get("quality", "common"), {}).duplicate()
+	var refund := int(item.get("upgrade_level", 0)) / 2
+	if refund > 0:
+		out[MAT_COMMON] = int(out.get(MAT_COMMON, 0)) + refund
+	return out

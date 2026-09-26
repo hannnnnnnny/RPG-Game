@@ -58,3 +58,16 @@ func test_reroll_cost_grows_and_lock_surcharges() -> void:
 	used.reroll_count = 4
 	assert_true(Forge.reroll_cost(used) > Forge.reroll_cost(fresh) * 5, "steep growth")
 	assert_true(Forge.reroll_cost(Forge.locked(fresh, 0)) > Forge.reroll_cost(fresh), "lock surcharge")
+
+func test_salvage_yield_by_quality() -> void:
+	assert_eq(Forge.salvage_yield(_item(0, "broken")), {Forge.MAT_COMMON: 1})
+	var rare := Forge.salvage_yield(_item(0, "rare"))
+	assert_eq(rare.get(Forge.MAT_RARE, 0), 1, "rare mat")
+
+func test_salvage_refunds_upgrades() -> void:
+	var y := Forge.salvage_yield(_item(6, "common"))
+	assert_eq(y[Forge.MAT_COMMON], 2 + 3, "base 2 + half of +6")
+
+func test_salvage_table_is_not_mutated() -> void:
+	Forge.salvage_yield(_item(8, "common"))
+	assert_eq(Forge.SALVAGE_TABLE.common, {Forge.MAT_COMMON: 2})
