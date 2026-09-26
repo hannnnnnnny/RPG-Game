@@ -16,3 +16,4 @@ pub mod save;
 pub mod map;
 pub mod areas;
 pub mod story;
+pub mod boss;
