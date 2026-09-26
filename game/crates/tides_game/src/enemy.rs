@@ -78,6 +78,8 @@ pub fn spawn(commands: &mut Commands, image: &Handle<Image>, at: Vec2) {
         Sprite::from_image(image.clone()),
         bevy::sprite::Anchor::BOTTOM_CENTER,
         Transform::from_translation(at.extend(10.0)).with_scale(Vec3::splat(2.0)),
+        // Faint violet aura so they loom out of the dark.
+        crate::lighting::Light::new(Color::srgb(0.55, 0.2, 0.7), 70.0, 0.45),
     ));
 }
 

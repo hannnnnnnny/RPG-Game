@@ -115,6 +115,11 @@ fn spawn_player(
             Visibility::default(),
         ))
         .with_children(|p| {
+            // Warm miner's lamp that follows the player.
+            p.spawn((
+                crate::lighting::Light::new(Color::srgb(1.0, 0.83, 0.58), 230.0, 1.35),
+                Transform::from_xyz(0.0, 16.0, 0.0),
+            ));
             for (i, path) in LAYERS.iter().enumerate() {
                 p.spawn((
                     LpcLayer,

@@ -10,6 +10,7 @@ mod coords;
 mod devtools;
 mod enemy;
 mod hud;
+mod lighting;
 mod paint;
 mod physics;
 mod player;
@@ -42,6 +43,7 @@ fn main() {
             enemy::plugin,
             combat::plugin,
             hud::plugin,
+            lighting::plugin,
             devtools::plugin,
         ))
         .run();
