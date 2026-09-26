@@ -17,7 +17,7 @@ use crate::paint::Canvas;
 use crate::physics::{Body, Velocity, YSort};
 use crate::player::Player;
 use crate::run_state::RunRes;
-use crate::ui::{Fonts, text_font};
+use crate::ui::{CREAM, Fonts, Frame, UiKit, text_font};
 
 const SCALE: f32 = 2.2;
 
@@ -175,27 +175,29 @@ fn expand_waves(mut commands: Commands, time: Res<Time>, mut gizmos: Gizmos, mut
     }
 }
 
-fn spawn_bar(mut commands: Commands, fonts: Res<Fonts>) {
+fn spawn_bar(mut commands: Commands, kit: Res<UiKit>, fonts: Res<Fonts>) {
     commands.spawn((
         BossBar,
         Node {
             position_type: PositionType::Absolute,
-            top: px(16),
+            top: px(12),
             left: percent(50),
-            width: px(420),
-            margin: UiRect::left(px(-210)),
+            width: px(460),
+            margin: UiRect::left(px(-230)),
             flex_direction: FlexDirection::Column,
-            row_gap: px(4),
+            row_gap: px(6),
             align_items: AlignItems::Center,
+            padding: UiRect::axes(px(24), px(14)),
             ..default()
         },
         Visibility::Hidden,
         children![
-            (Text::new("黑腕队长·格罗姆"), text_font(&fonts.body, 16.0), TextColor(Color::srgb(0.85, 0.6, 0.95))),
+            kit.backdrop(Frame::Plank),
+            (Text::new("黑腕队长·格罗姆"), text_font(&fonts.body, 16.0), TextColor(CREAM)),
             (
-                Node { width: percent(100), height: px(8), border_radius: BorderRadius::all(px(4)), ..default() },
-                BackgroundColor(Color::srgba(1.0, 1.0, 1.0, 0.1)),
-                children![(BossBarFill, Node { width: percent(100), height: percent(100), ..default() }, BackgroundColor(Color::srgb(0.6, 0.2, 0.75)))],
+                Node { width: percent(100), height: px(12), ..default() },
+                BackgroundColor(Color::srgb(0.23, 0.11, 0.04)),
+                children![(BossBarFill, Node { width: percent(100), height: percent(100), ..default() }, BackgroundColor(Color::srgb(0.62, 0.22, 0.78)))],
             ),
         ],
     ));

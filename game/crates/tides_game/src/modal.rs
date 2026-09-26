@@ -8,7 +8,7 @@ use tides_core::world::DwarfChoice;
 use crate::beats::{Modal, PlayBeat};
 use crate::pixelated::Pixelated;
 use crate::run_state::RunRes;
-use crate::ui::{Fonts, TEXT, TEXT_MUTED, text_font};
+use crate::ui::{Fonts, Frame, INK, INK_RED, INK_SOFT, UiKit, text_font};
 
 #[derive(Component)]
 struct ModalRoot;
@@ -19,8 +19,6 @@ struct OptionButton(DwarfChoice);
 #[derive(Component)]
 struct CloseVision;
 
-const GOLD: Color = Color::srgb(0.85, 0.71, 0.38);
-
 pub fn plugin(app: &mut App) {
     app.add_systems(Update, (rebuild, choose, close_vision, hover));
 }
@@ -30,6 +28,7 @@ fn rebuild(
     modal: Res<Modal>,
     roots: Query<Entity, With<ModalRoot>>,
     fonts: Res<Fonts>,
+    kit: Res<UiKit>,
     assets: Res<AssetServer>,
     mut images: ResMut<Assets<Image>>,
     mut pixelated: ResMut<Pixelated>,
@@ -46,11 +45,11 @@ fn rebuild(
             commands.entity(root).despawn();
         }
         Modal::Choice(c) => {
-            commands.entity(root).with_children(|p| choice_panel(p, c, &fonts.body));
+            commands.entity(root).with_children(|p| choice_panel(p, c, &kit, &fonts.body));
         }
         Modal::Vision(v) => {
             let img = pixelated.get(v.image, 160, &assets, &mut images);
-            commands.entity(root).with_children(|p| vision_panel(p, v, img, &fonts.body));
+            commands.entity(root).with_children(|p| vision_panel(p, v, img, &kit, &fonts.body));
         }
     }
 }
@@ -66,7 +65,7 @@ fn backdrop() -> impl Bundle {
             justify_content: JustifyContent::Center,
             ..default()
         },
-        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.66)),
+        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.45)),
         GlobalZIndex(10),
     )
 }
@@ -75,49 +74,45 @@ fn panel_node(width: f32) -> Node {
     Node {
         width: px(width),
         flex_direction: FlexDirection::Column,
-        row_gap: px(12),
-        padding: px(24).all(),
-        border: px(1).all(),
-        border_radius: BorderRadius::all(px(10)),
+        row_gap: px(10),
+        padding: UiRect::axes(px(36), px(30)),
         ..default()
     }
 }
 
-fn choice_panel(p: &mut ChildSpawnerCommands, c: &Choice, font: &Handle<Font>) {
-    p.spawn((panel_node(620.0), BackgroundColor(Color::srgba(0.06, 0.05, 0.07, 0.97)), BorderColor::all(GOLD)))
-        .with_children(|p| {
-            p.spawn((Text::new(c.title), text_font(font, 24.0), TextColor(GOLD)));
-            p.spawn((Text::new(c.body), text_font(font, 15.0), TextColor(TEXT)));
-            for o in &c.options {
-                p.spawn((
-                    OptionButton(o.choice),
-                    Button,
-                    Node {
-                        flex_direction: FlexDirection::Column,
-                        padding: px(10).all(),
-                        border: px(1).all(),
-                        border_radius: BorderRadius::all(px(6)),
-                        ..default()
-                    },
-                    BackgroundColor(Color::srgba(1.0, 1.0, 1.0, 0.04)),
-                    BorderColor::all(Color::srgba(0.85, 0.71, 0.38, 0.35)),
-                    children![
-                        (Text::new(o.label), text_font(font, 17.0), TextColor(TEXT)),
-                        (Text::new(o.description), text_font(font, 12.0), TextColor(TEXT_MUTED)),
-                    ],
-                ));
-            }
-        });
+/// Stardew's question box: prompt text, then answers; the hovered answer
+/// gets a tan highlight and a pointer.
+fn choice_panel(p: &mut ChildSpawnerCommands, c: &Choice, kit: &UiKit, font: &Handle<Font>) {
+    p.spawn(panel_node(640.0)).with_children(|p| {
+        p.spawn(kit.backdrop(Frame::Parchment));
+        p.spawn((Text::new(c.title), text_font(font, 22.0), TextColor(INK_RED)));
+        p.spawn((Text::new(c.body), text_font(font, 16.0), TextColor(INK)));
+        for o in &c.options {
+            p.spawn((
+                OptionButton(o.choice),
+                Button,
+                Node { flex_direction: FlexDirection::Column, padding: UiRect::axes(px(12), px(6)), ..default() },
+                BackgroundColor(Color::NONE),
+                children![
+                    (Text::new(format!("  {}", o.label)), text_font(font, 18.0), TextColor(INK)),
+                    (Text::new(format!("    {}", o.description)), text_font(font, 12.0), TextColor(INK_SOFT)),
+                ],
+            ));
+        }
+    });
 }
 
-fn vision_panel(p: &mut ChildSpawnerCommands, v: &Vision, img: Handle<Image>, font: &Handle<Font>) {
-    p.spawn((panel_node(560.0), BackgroundColor(Color::srgba(0.03, 0.02, 0.05, 0.97)), BorderColor::all(Color::srgb(0.56, 0.31, 0.64))))
-        .with_children(|p| {
-            p.spawn((ImageNode::new(img), Node { width: px(512), height: px(320), ..default() }));
-            p.spawn((Text::new(v.caption), text_font(font, 15.0), TextColor(TEXT)));
-            p.spawn((CloseVision, Button, Node { padding: px(8).all(), align_self: AlignSelf::End, ..default() },
-                children![(Text::new("醒来  (E)"), text_font(font, 14.0), TextColor(TEXT_MUTED))]));
+fn vision_panel(p: &mut ChildSpawnerCommands, v: &Vision, img: Handle<Image>, kit: &UiKit, font: &Handle<Font>) {
+    p.spawn(Node { align_items: AlignItems::Center, ..panel_node(600.0) }).with_children(|p| {
+        p.spawn(kit.backdrop(Frame::Parchment));
+        p.spawn(Node { padding: px(9).all(), ..default() }).with_children(|p| {
+            p.spawn(kit.backdrop(Frame::Slot));
+            p.spawn((ImageNode::new(img), Node { width: px(480), height: px(300), ..default() }));
         });
+        p.spawn((Text::new(v.caption), text_font(font, 15.0), TextColor(INK)));
+        p.spawn((CloseVision, Button, Node { padding: px(6).all(), align_self: AlignSelf::End, ..default() },
+            children![(Text::new("醒来 (E)"), text_font(font, 14.0), TextColor(INK_SOFT))]));
+    });
 }
 
 fn choose(
@@ -141,11 +136,17 @@ fn close_vision(keys: Res<ButtonInput<KeyCode>>, q: Query<&Interaction, With<Clo
     }
 }
 
-fn hover(mut q: Query<(&Interaction, &mut BackgroundColor), (With<OptionButton>, Changed<Interaction>)>) {
-    for (i, mut bg) in &mut q {
-        bg.0 = match i {
-            Interaction::Hovered => Color::srgba(0.85, 0.71, 0.38, 0.14),
-            _ => Color::srgba(1.0, 1.0, 1.0, 0.04),
-        };
+/// Hovered answer: tan highlight and a ▶ pointer in front of its label.
+fn hover(
+    mut q: Query<(&Interaction, &Children, &mut BackgroundColor), (With<OptionButton>, Changed<Interaction>)>,
+    mut texts: Query<&mut Text>,
+) {
+    for (i, children, mut bg) in &mut q {
+        let hot = *i != Interaction::None;
+        bg.0 = if hot { Color::srgba(0.85, 0.6, 0.3, 0.35) } else { Color::NONE };
+        if let Some(mut label) = children.first().and_then(|c| texts.get_mut(*c).ok()) {
+            let bare = label.0.trim_start_matches(['▶', ' ']).to_string();
+            label.0 = if hot { format!("▶ {bare}") } else { format!("  {bare}") };
+        }
     }
 }
