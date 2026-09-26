@@ -89,3 +89,4 @@ fn request(kind: ChangeKind, by: &str, reason: &str, effects: Vec<Effect>) -> St
 
 pub mod mine;
 pub mod town;
+pub mod journal;

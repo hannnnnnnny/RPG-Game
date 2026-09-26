@@ -110,6 +110,13 @@ impl Run {
         Ok(())
     }
 
+    pub fn unequip(&mut self, slot: Slot) {
+        if let Some(id) = self.equipped.remove(&slot) {
+            let title = self.find_item(id).map(Item::title).unwrap_or_default();
+            self.log(format!("卸下：{title}"));
+        }
+    }
+
     pub fn remove_item(&mut self, id: ItemId) -> Option<Item> {
         let idx = self.inventory.iter().position(|i| i.id == id)?;
         let item = self.inventory.remove(idx);
@@ -332,6 +339,16 @@ mod tests {
         assert_eq!(run.stats().attack, stats::BASE_ATTACK);
         run.equip(ItemId(7)).unwrap();
         assert_eq!(run.stats().attack, stats::BASE_ATTACK + 5);
+    }
+
+    #[test]
+    fn unequip_clears_slot_and_stats() {
+        let mut run = Run::new("t");
+        run.add_item(weapon(5));
+        run.equip(ItemId(7)).unwrap();
+        run.unequip(Slot::MainHand);
+        assert_eq!(run.stats().attack, stats::BASE_ATTACK);
+        assert_eq!(run.inventory.len(), 1, "item stays in the bag");
     }
 
     #[test]

@@ -90,6 +90,12 @@ fn warden_line(run: &Run) -> String {
     }
 }
 
+/// A readable prop (notice board, fountain, well): cycles its lines.
+pub fn sign(title: &str, lines: &[&str], uses: usize) -> Beat {
+    let text = lines.get(uses % lines.len().max(1)).copied().unwrap_or("……");
+    Beat::say(Line::new(title, text, Tone::Memory))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -120,8 +126,3 @@ mod tests {
     }
 }
 
-/// A readable prop (notice board, fountain, well): cycles its lines.
-pub fn sign(title: &str, lines: &[&str], uses: usize) -> Beat {
-    let text = lines.get(uses % lines.len().max(1)).copied().unwrap_or("……");
-    Beat::say(Line::new(title, text, Tone::Memory))
-}
