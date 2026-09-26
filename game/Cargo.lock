@@ -4934,6 +4934,7 @@ name = "tides_game"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "fastrand",
  "tides_core",
 ]
 
