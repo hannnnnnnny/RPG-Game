@@ -34,6 +34,9 @@ const PATH_POINTS := [
 
 const LIGHT_TEX := preload("res://assets/textures/light_soft.tres")
 
+# Safe point after the totem vision, just short of Grom's room.
+const TOTEM_CHECKPOINT := Vector2(870, 400)
+
 @onready var player: Player = $Entities/Player
 @onready var camera: Camera2D = $Entities/Player/Camera2D
 @onready var enemies_root: Node2D = $Entities  # y-sorted with player/interactables
@@ -65,6 +68,8 @@ func _ready() -> void:
 	GameState.world_state_changed.connect(_on_world_changed)
 	Audio.start_ambient()
 
+	if GameState.world_state.flags.get("touched_totem_fragment", false):
+		player.respawn_point = TOTEM_CHECKPOINT
 	# On reload: if the dwarf was already rescued, he's still tagging along.
 	if GameState.world_state.flags.get("first_dwarf_choice", "") == "save":
 		_spawn_follower()
@@ -322,6 +327,8 @@ func _on_world_changed(path: String, value: Variant) -> void:
 	# his corrupted form as the boss, guarding the exit.
 	if path == "flags.touched_totem_fragment" and value == true and not _boss_spawned:
 		_spawn_boss()
+		# Checkpoint: dying to Grom sends you back to the totem, not the start.
+		player.respawn_point = TOTEM_CHECKPOINT
 	# Choosing to save the injured dwarf — he gets up and follows you.
 	if path == "flags.first_dwarf_choice" and value == "save":
 		_spawn_follower()
