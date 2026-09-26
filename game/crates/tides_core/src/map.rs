@@ -11,11 +11,16 @@ pub enum Tile {
     Puddle,
     Ground,
     Plank,
+    Grass,
+    /// Building roof (solid; drawn as shingles).
+    Roof,
+    /// Building front wall (solid; drawn as timber with windows).
+    Facade,
 }
 
 impl Tile {
     pub fn is_solid(self) -> bool {
-        self == Tile::Wall
+        matches!(self, Tile::Wall | Tile::Roof | Tile::Facade)
     }
 }
 
