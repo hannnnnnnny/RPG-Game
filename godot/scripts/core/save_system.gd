@@ -3,6 +3,9 @@ extends Node
 
 const SAVE_PATH := "user://tides_of_khah_v1.cfg"
 
+# Tests point this elsewhere so they never overwrite the real save.
+var save_path: String = SAVE_PATH
+
 func save() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("meta", "version", 1)
@@ -14,13 +17,13 @@ func save() -> void:
 	cfg.set_value("game", "equipped", GameState.equipped)
 	cfg.set_value("game", "materials", GameState.materials)
 	cfg.set_value("game", "log", GameState.log)
-	var err := cfg.save(SAVE_PATH)
+	var err := cfg.save(save_path)
 	if err != OK:
 		push_error("Save failed: %s" % err)
 
 func load_save() -> bool:
 	var cfg := ConfigFile.new()
-	var err := cfg.load(SAVE_PATH)
+	var err := cfg.load(save_path)
 	if err != OK:
 		return false
 	GameState.profile = cfg.get_value("game", "profile", {})
@@ -39,8 +42,8 @@ func load_save() -> bool:
 	return true
 
 func has_save() -> bool:
-	return FileAccess.file_exists(SAVE_PATH)
+	return FileAccess.file_exists(save_path)
 
 func delete_save() -> void:
 	if has_save():
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH))
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(save_path))

@@ -6,14 +6,19 @@
 extends Node
 
 const UNIT_DIR := "res://tests/unit"
+# Every save during a test run (including debounced autosaves that fire
+# late) goes here, never to the player's real save file.
+const SANDBOX_SAVE := "user://test_sandbox.cfg"
 
 var _failures: Array[String] = []
 var _passed: int = 0
 
 func _ready() -> void:
+	SaveSystem.save_path = SANDBOX_SAVE
 	for path in _discover():
 		_run_suite(path)
 	_report()
+	SaveSystem.delete_save()
 	get_tree().quit(1 if _failures.size() > 0 else 0)
 
 func _discover() -> PackedStringArray:
