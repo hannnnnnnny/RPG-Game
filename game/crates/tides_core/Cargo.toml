@@ -9,3 +9,5 @@ license.workspace = true
 workspace = true
 
 [dependencies]
+fastrand = "2.5.0"
+serde = { version = "1.0.229", features = ["derive"] }

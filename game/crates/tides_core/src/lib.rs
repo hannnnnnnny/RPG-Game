@@ -2,3 +2,5 @@
 //!
 //! Everything here is plain data + pure functions so it can be unit-tested
 //! without Bevy and reused by any front end (game, tools, balance sims).
+
+pub mod item;
