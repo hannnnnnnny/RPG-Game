@@ -6,6 +6,7 @@ use tides_core::areas::Mine;
 use tides_core::combat::{self, KillSource};
 use tides_core::loot::{self, DropSource};
 
+use crate::boss::Boss;
 use crate::camera::MainCamera;
 use crate::coords::{Z_OVERLAY, to_world};
 use crate::enemy::{Enemy, PlayerStruck};
@@ -82,6 +83,7 @@ fn swing(
     cam: Single<(&Camera, &GlobalTransform), With<MainCamera>>,
     mut player: Single<(&Transform, &mut Vitals, &mut Motion), With<Player>>,
     mut enemies: Query<(&Transform, &mut Enemy), Without<Player>>,
+    mut bosses: Query<(&Transform, &mut Boss), (Without<Player>, Without<Enemy>)>,
     run: Res<RunRes>,
     mut rng: ResMut<GameRng>,
 ) {
@@ -100,15 +102,27 @@ fn swing(
     motion.facing = Facing::from_vec(aim);
     spawn_slash(&mut commands, origin + Vec2::Y * 16.0, aim.to_angle());
     let stats = run.stats();
+    let in_cone = |target: Vec2, reach: f32| {
+        let to = target - origin;
+        to.length() <= reach && to.angle_to(aim).abs() <= HALF_ARC
+    };
     for (etf, mut enemy) in &mut enemies {
         let epos = etf.translation.truncate();
-        let to = epos - origin;
-        if to.length() > REACH || to.angle_to(aim).abs() > HALF_ARC {
-            continue;
+        if in_cone(epos, REACH) {
+            let hit = combat::roll_hit(&stats, &mut rng, motion.since_roll);
+            enemy.hit(hit.amount as f32, epos, origin);
+            spawn_number(&mut commands, epos + Vec2::Y * 40.0, hit.amount, hit.crit);
         }
-        let hit = combat::roll_hit(&stats, &mut rng, motion.since_roll);
-        enemy.hit(hit.amount as f32, epos, origin);
-        spawn_number(&mut commands, epos + Vec2::Y * 40.0, hit.amount, hit.crit);
+    }
+    // Grom is big: a little extra reach so hits on him feel fair.
+    for (btf, mut boss) in &mut bosses {
+        let bpos = btf.translation.truncate();
+        if in_cone(bpos, REACH + 24.0) {
+            let hit = combat::roll_hit(&stats, &mut rng, motion.since_roll);
+            boss.brain.take_damage(hit.amount as f32);
+            boss.flash = 0.1;
+            spawn_number(&mut commands, bpos + Vec2::Y * 90.0, hit.amount, hit.crit);
+        }
     }
 }
 

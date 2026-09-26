@@ -51,7 +51,7 @@ pub struct PlayerStruck {
 }
 
 #[derive(Resource)]
-struct EnemyArt(Handle<Image>);
+pub struct EnemyArt(pub Handle<Image>);
 
 pub fn plugin(app: &mut App) {
     app.add_message::<PlayerStruck>()

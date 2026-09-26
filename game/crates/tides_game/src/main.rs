@@ -9,6 +9,7 @@ mod pixelated;
 mod modal;
 mod dialogue;
 mod beats;
+mod boss;
 mod camera;
 mod combat;
 mod coords;
@@ -41,7 +42,7 @@ fn main() {
         // Engine-level services, then world/gameplay, then presentation.
         .add_plugins((ui::plugin, run_state::plugin, pixelated::plugin, devtools::plugin))
         .add_plugins((area::plugin, physics::plugin, lighting::plugin, camera::plugin))
-        .add_plugins((player::plugin, enemy::plugin, combat::plugin, spots::plugin))
+        .add_plugins((player::plugin, enemy::plugin, boss::plugin, combat::plugin, spots::plugin))
         .add_plugins((beats::plugin, dialogue::plugin, modal::plugin, hud::plugin))
         .run();
 }
