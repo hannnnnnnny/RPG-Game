@@ -1,0 +1,12 @@
+[package]
+name = "tides_game"
+description = "《潮蚀之环》Bevy front end."
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tides_core = { path = "../tides_core" }
