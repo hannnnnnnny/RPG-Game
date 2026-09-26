@@ -29,21 +29,13 @@ func _on_choice_closed() -> void:
 	visible = false
 
 func _on_option_picked(option_id: String) -> void:
-	var corruption_delta: int
-	var sanity_value: int
-	match option_id:
-		"save":
-			sanity_value = 82
-			corruption_delta = 5
-		"abandon":
-			sanity_value = 70
-			corruption_delta = 8
-		"kill":
-			sanity_value = 64
-			corruption_delta = 13
-		_:
-			sanity_value = 70
-			corruption_delta = 5
+	# Relative changes so an earlier event (e.g. the totem) is never undone.
+	const EFFECTS := {
+		"save": {"sanity": 4, "corruption": 0},
+		"abandon": {"sanity": -8, "corruption": 3},
+		"kill": {"sanity": -14, "corruption": 8},
+	}
+	var fx: Dictionary = EFFECTS.get(option_id, EFFECTS.abandon)
 
 	var approved: bool = GameState.request_state_change({
 		"type": "record_first_choice",
@@ -52,8 +44,8 @@ func _on_option_picked(option_id: String) -> void:
 		"reason": "玩家选择：%s" % option_id,
 		"effects": [
 			{"path": "flags.first_dwarf_choice", "value": option_id},
-			{"path": "sanity", "value": sanity_value},
-			{"path": "corruption", "value": corruption_delta}
+			{"path": "sanity", "delta": fx.sanity},
+			{"path": "corruption", "delta": fx.corruption}
 		]
 	})
 
