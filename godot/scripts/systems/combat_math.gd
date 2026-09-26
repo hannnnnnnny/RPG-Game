@@ -19,3 +19,9 @@ static func roll_hit(stats: Dictionary, rng: RandomNumberGenerator, since_roll: 
 ## Gold after the loadout's 金币掉落 bonus.
 static func apply_gold_find(base_gold: int, stats: Dictionary) -> int:
 	return int(round(base_gold * (1.0 + float(stats.get("gold_find", 0.0)))))
+
+# Death is light (design §12): lose a slice of gold, never equipment.
+const DEATH_GOLD_LOSS := 0.1
+
+static func death_gold_loss(gold: int) -> int:
+	return int(floor(maxi(gold, 0) * DEATH_GOLD_LOSS))

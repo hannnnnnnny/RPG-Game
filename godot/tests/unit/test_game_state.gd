@@ -41,3 +41,12 @@ func test_spend_materials_is_all_or_nothing() -> void:
 	GameState.add_materials({"common_mat": 5})
 	assert_false(GameState.spend_materials({"common_mat": 1, "rare_mat": 1}), "missing rare")
 	assert_eq(GameState.materials.common_mat, 5, "nothing deducted")
+
+func test_player_down_loses_gold_but_keeps_gear() -> void:
+	GameState.world_state.gold = 300
+	GameState.inventory = [_weapon(5)]
+	GameState.equipped = {Types.SLOT_MAIN_HAND: "w1"}
+	assert_eq(GameState.on_player_down(), 30, "lost")
+	assert_eq(GameState.world_state.gold, 270, "gold")
+	assert_eq(GameState.inventory.size(), 1, "gear kept")
+	assert_eq(GameState.equipped.get(Types.SLOT_MAIN_HAND), "w1", "still equipped")

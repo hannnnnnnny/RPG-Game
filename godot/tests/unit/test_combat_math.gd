@@ -30,3 +30,8 @@ func test_crit_rate_roughly_matches_chance() -> void:
 func test_gold_find_scales_gold() -> void:
 	assert_eq(CombatMath.apply_gold_find(100, {"gold_find": 0.3}), 130)
 	assert_eq(CombatMath.apply_gold_find(100, {}), 100)
+
+func test_death_costs_ten_percent_gold() -> void:
+	assert_eq(CombatMath.death_gold_loss(250), 25)
+	assert_eq(CombatMath.death_gold_loss(5), 0, "rounds down")
+	assert_eq(CombatMath.death_gold_loss(-3), 0, "never negative")

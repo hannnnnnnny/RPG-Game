@@ -171,6 +171,19 @@ func spend_materials(cost: Dictionary) -> bool:
 	_schedule_save()
 	return true
 
+## Applies the death penalty and returns the gold lost.
+func on_player_down() -> int:
+	var lost := CombatMath.death_gold_loss(int(world_state.gold))
+	if lost > 0:
+		spend_gold(lost)
+	_log("倒下了。遗失 %d 金币。" % lost)
+	set_dialogue({
+		"speaker": "克哈低语",
+		"text": "死亡在这里没有耐心。%s 枚金币留在了黑暗里——站起来，再走一次。" % lost,
+		"tone": Types.TONE_WHISPER
+	})
+	return lost
+
 # Spend gold if affordable; returns success.
 func spend_gold(amount: int) -> bool:
 	if world_state.gold < amount:

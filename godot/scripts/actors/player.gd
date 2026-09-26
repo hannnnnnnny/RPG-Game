@@ -31,6 +31,8 @@ var sprinting: bool = false
 # Loadout-derived (see StatCalc); refreshed on GameState.stats_changed.
 var stamina_regen: float = StatCalc.BASE_STAMINA_REGEN
 var damage_reduction: float = 0.0
+# Nearest safe point; levels move it forward as the player progresses.
+var respawn_point: Vector2 = Vector2(155, 165)
 # Seconds since the last dodge roll ended; drives 翻滚后伤害.
 var since_roll: float = 99.0
 
@@ -158,12 +160,8 @@ func take_damage(amount: float) -> void:
 
 func _on_player_down() -> void:
 	health = max_health
-	global_position = Vector2(155, 165)
-	GameState.set_dialogue({
-		"speaker": "克哈低语",
-		"text": "死亡在这里没有耐心。站起来，再走一次。",
-		"tone": Types.TONE_WHISPER
-	})
+	global_position = respawn_point
+	GameState.on_player_down()
 
 # ============ LPC layer composite ============
 # Stack body + purple robe + hood into one walk sheet (576x256, 9 frames x 4
