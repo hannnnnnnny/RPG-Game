@@ -1,5 +1,5 @@
-//! Mine interaction spots (受伤矮人 / 图腾残片 / 矿井出口). Pressing E near the
-//! closest active one runs its story beat.
+//! Mine story spots (受伤矮人 / 图腾残片 / 矿井出口): art, lights, and
+//! the opening whisper. Interaction itself goes through `interact`.
 
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
@@ -9,27 +9,19 @@ use tides_core::world::DwarfChoice;
 
 use crate::area::Area;
 use crate::beats::PlayBeat;
-use crate::coords::{Z_OVERLAY, to_world};
-use crate::dialogue::InteractPressed;
+use crate::coords::to_world;
+use crate::interact::{Interactable, Target};
 use crate::lighting::Light;
 use crate::paint::Canvas;
 use crate::physics::YSort;
-use crate::player::Player;
 use crate::run_state::RunRes;
-use crate::ui::{Fonts, text_font};
-
-const RANGE: f32 = 90.0;
 
 #[derive(Component)]
 pub struct SpotC(pub Spot);
 
-#[derive(Component)]
-struct Prompt;
-
 pub fn plugin(app: &mut App) {
-    app.add_systems(Startup, spawn_prompt)
-        .add_systems(OnEnter(Area::Mine), (spawn_spots, queue_intro))
-        .add_systems(Update, (intro, interact, update_prompt, retire_spent));
+    app.add_systems(OnEnter(Area::Mine), (spawn_spots, queue_intro))
+        .add_systems(Update, (intro, retire_spent));
 }
 
 fn spawn_spots(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
@@ -41,6 +33,7 @@ fn spawn_spots(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
     for (spot, at, light) in defs {
         commands.spawn((
             SpotC(spot),
+            Interactable::new(Target::MineSpot(spot), 64.0),
             DespawnOnExit(Area::Mine),
             Sprite::from_image(images.add(spot_image(spot))),
             Anchor::BOTTOM_CENTER,
@@ -84,33 +77,6 @@ fn spot_image(spot: Spot) -> Image {
     c.into_image()
 }
 
-fn nearest_active<'a>(
-    player: Vec2,
-    run: &RunRes,
-    spots: impl Iterator<Item = (&'a SpotC, &'a Transform)>,
-) -> Option<(Spot, Vec2)> {
-    spots
-        .filter(|(s, _)| mine::is_active(run, s.0))
-        .map(|(s, tf)| (s.0, tf.translation.truncate()))
-        .filter(|(_, p)| p.distance(player) < RANGE)
-        .min_by(|a, b| a.1.distance(player).total_cmp(&b.1.distance(player)))
-}
-
-fn interact(
-    mut pressed: MessageReader<InteractPressed>,
-    player: Single<&Transform, With<Player>>,
-    spots: Query<(&SpotC, &Transform)>,
-    mut run: ResMut<RunRes>,
-    mut beats: MessageWriter<PlayBeat>,
-) {
-    if pressed.read().count() == 0 {
-        return;
-    }
-    if let Some((spot, _)) = nearest_active(player.translation.truncate(), &run, spots.iter()) {
-        beats.write(PlayBeat(mine::interact(&mut run, spot)));
-    }
-}
-
 /// Set on entering the mine; the whisper plays on the next Update so the
 /// message isn't lost across the state transition.
 #[derive(Resource)]
@@ -125,32 +91,6 @@ fn intro(mut commands: Commands, pending: Option<Res<IntroPending>>, run: Res<Ru
     if pending.is_some() {
         commands.remove_resource::<IntroPending>();
         beats.write(PlayBeat(mine::on_enter(&run)));
-    }
-}
-
-fn spawn_prompt(mut commands: Commands, fonts: Res<Fonts>) {
-    commands.spawn((
-        Prompt,
-        Text2d::new("E"),
-        text_font(&fonts.body, 14.0),
-        TextColor(Color::srgb(0.95, 0.9, 0.7)),
-        Transform::from_xyz(0.0, 0.0, Z_OVERLAY),
-        Visibility::Hidden,
-    ));
-}
-
-fn update_prompt(
-    player: Single<&Transform, (With<Player>, Without<Prompt>)>,
-    spots: Query<(&SpotC, &Transform), Without<Prompt>>,
-    run: Res<RunRes>,
-    mut prompt: Single<(&mut Transform, &mut Visibility), With<Prompt>>,
-) {
-    match nearest_active(player.translation.truncate(), &run, spots.iter()) {
-        Some((_, at)) => {
-            prompt.0.translation = (at + Vec2::Y * 64.0).extend(Z_OVERLAY);
-            *prompt.1 = Visibility::Inherited;
-        }
-        None => *prompt.1 = Visibility::Hidden,
     }
 }
 

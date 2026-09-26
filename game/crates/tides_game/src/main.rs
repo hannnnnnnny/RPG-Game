@@ -16,6 +16,7 @@ mod coords;
 mod devtools;
 mod enemy;
 mod hud;
+mod interact;
 mod lighting;
 mod lpc;
 mod paint;
@@ -45,6 +46,6 @@ fn main() {
         .add_plugins((ui::plugin, run_state::plugin, pixelated::plugin, lpc::plugin, devtools::plugin))
         .add_plugins((area::plugin, physics::plugin, lighting::plugin, camera::plugin))
         .add_plugins((player::plugin, enemy::plugin, boss::plugin, combat::plugin, spots::plugin))
-        .add_plugins((beats::plugin, dialogue::plugin, modal::plugin, hud::plugin))
+        .add_plugins((beats::plugin, dialogue::plugin, modal::plugin, hud::plugin, interact::plugin))
         .run();
 }

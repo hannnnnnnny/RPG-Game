@@ -119,3 +119,9 @@ mod tests {
         assert_eq!(talk(&run, smith, 0), talk(&run, smith, 3));
     }
 }
+
+/// A readable prop (notice board, fountain, well): cycles its lines.
+pub fn sign(title: &str, lines: &[&str], uses: usize) -> Beat {
+    let text = lines.get(uses % lines.len().max(1)).copied().unwrap_or("……");
+    Beat::say(Line::new(title, text, Tone::Memory))
+}
