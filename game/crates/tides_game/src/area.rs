@@ -14,12 +14,16 @@ use crate::tiles_mine;
 #[derive(Component)]
 pub struct AreaEntity;
 
+/// Display name of the current area (HUD info box).
+#[derive(Resource, Clone, Copy)]
+pub struct AreaTitle(pub &'static str);
+
 /// Pixel size of the current area (map space), for camera clamping.
 #[derive(Resource, Clone, Copy)]
 pub struct AreaBounds(pub Vec2);
 
 pub fn plugin(app: &mut App) {
-    app.add_systems(Startup, spawn_mine);
+    app.insert_resource(AreaTitle("黑潮矿区")).add_systems(Startup, spawn_mine);
 }
 
 fn spawn_mine(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
