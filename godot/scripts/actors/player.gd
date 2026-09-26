@@ -12,7 +12,6 @@ const ROLL_SPEED := 250.0
 const ROLL_DURATION := 0.26
 const ATTACK_COOLDOWN := 0.34
 const STAMINA_SPRINT_DRAIN := 24.0
-const STAMINA_REGEN := 20.0
 
 const LPC_FRAME := 64  # source frame size
 
@@ -29,6 +28,9 @@ var attack_timer: float = 0.0
 var step_timer: float = 0.0
 var moving: bool = false
 var sprinting: bool = false
+# Loadout-derived (see StatCalc); refreshed on GameState.stats_changed.
+var stamina_regen: float = StatCalc.BASE_STAMINA_REGEN
+var damage_reduction: float = 0.0
 
 @onready var sprite: AnimatedSprite2D = $Sprite
 
@@ -39,6 +41,15 @@ func _ready() -> void:
 	var sheet := _composite_lpc()
 	sprite.sprite_frames = _build_frames(sheet)
 	sprite.play("idle_down")
+	GameState.stats_changed.connect(_apply_stats)
+	_apply_stats(GameState.get_stats())
+	health = max_health  # every scene entry starts at full health
+
+func _apply_stats(stats: Dictionary) -> void:
+	max_health = float(stats.max_health)
+	health = minf(health, max_health)
+	stamina_regen = float(stats.stamina_regen)
+	damage_reduction = float(stats.damage_reduction)
 
 func _physics_process(delta: float) -> void:
 	roll_timer = max(0.0, roll_timer - delta)
@@ -70,7 +81,7 @@ func _physics_process(delta: float) -> void:
 	if sprinting:
 		stamina = max(0.0, stamina - STAMINA_SPRINT_DRAIN * delta)
 	elif roll_timer <= 0.0:
-		stamina = min(max_stamina, stamina + STAMINA_REGEN * delta)
+		stamina = min(max_stamina, stamina + stamina_regen * delta)
 
 	# Footsteps (quicker cadence when sprinting).
 	if moving:
@@ -135,7 +146,7 @@ func _update_animation() -> void:
 		sprite.play(anim)
 
 func take_damage(amount: float) -> void:
-	health = max(0.0, health - amount)
+	health = max(0.0, health - amount * (1.0 - damage_reduction))
 	modulate = Color(1.4, 0.6, 0.6)
 	await get_tree().create_timer(0.08).timeout
 	modulate = Color.WHITE
