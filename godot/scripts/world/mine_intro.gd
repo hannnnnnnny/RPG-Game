@@ -392,7 +392,7 @@ func _on_boss_died() -> void:
 		]
 	})
 	# Guaranteed strong drop + gold for the kill.
-	GameState.add_gold(LootGenerator.gold_for_kill("boss", GameState.world_state.world_tier))
+	GameState.add_kill_gold("boss")
 	GameState.add_item(LootGenerator.generate_loot("elite", GameState.world_state.world_tier))
 	objective_label.text = "目标：黑潮退去了。前往矿井出口，逃向灰灯镇。"
 	GameState.set_dialogue({

@@ -140,6 +140,11 @@ func add_gold(amount: int) -> void:
 	_log("获得 %d 金币。" % amount)
 	_schedule_save()
 
+## Kill reward: base gold for the source/tier, boosted by 金币掉落.
+func add_kill_gold(source: String) -> void:
+	var base := LootGenerator.gold_for_kill(source, int(world_state.world_tier))
+	add_gold(CombatMath.apply_gold_find(base, get_stats()))
+
 # Spend gold if affordable; returns success.
 func spend_gold(amount: int) -> bool:
 	if world_state.gold < amount:
