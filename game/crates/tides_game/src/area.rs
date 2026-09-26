@@ -4,7 +4,7 @@
 
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
-use tides_core::areas::{Mine, Pt};
+use tides_core::areas::{Mine, Pt, Town};
 use tides_core::map::{Layout, Tile, wall_rects};
 use tides_core::story::AreaId;
 
@@ -14,7 +14,7 @@ use crate::lighting::Ambient;
 use crate::paint::{self, Canvas, Cell, SRC};
 use crate::physics::Walls;
 use crate::player::Player;
-use crate::tiles_mine;
+use crate::{tiles_mine, tiles_town};
 
 #[derive(States, Default, Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum Area {
@@ -55,6 +55,7 @@ pub fn plugin(app: &mut App) {
         .init_resource::<Arrival>()
         .add_systems(PostStartup, |mut next: ResMut<NextState<Area>>| next.set(Area::Mine))
         .add_systems(OnEnter(Area::Mine), enter_mine)
+        .add_systems(OnEnter(Area::Town), enter_town)
         .add_systems(Update, follow_goto);
 }
 
@@ -112,4 +113,21 @@ fn enter_mine(
         ambient: Ambient { color: Color::srgb(0.03, 0.02, 0.06), darkness: 0.74 },
     };
     build_area(spec, tiles_mine::paint, &mut commands, &mut images, &mut arrival, &mut player);
+}
+
+fn enter_town(
+    mut commands: Commands,
+    mut images: ResMut<Assets<Image>>,
+    mut arrival: ResMut<Arrival>,
+    mut player: Single<&mut Transform, With<Player>>,
+) {
+    let spec = AreaSpec {
+        area: Area::Town,
+        layout: &Town,
+        title: "灰灯镇",
+        entrance: Town::ENTRANCE,
+        // Dusk: the town is safe, but the light is already failing.
+        ambient: Ambient { color: Color::srgb(0.08, 0.06, 0.12), darkness: 0.42 },
+    };
+    build_area(spec, tiles_town::paint, &mut commands, &mut images, &mut arrival, &mut player);
 }

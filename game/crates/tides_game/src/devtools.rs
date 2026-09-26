@@ -9,6 +9,7 @@ use bevy::render::view::screenshot::{Screenshot, save_to_disk};
 use tides_core::areas::Mine;
 use tides_core::story::mine::{self, Spot};
 
+use crate::area::Area;
 use crate::beats::{DialogueQueue, PlayBeat, SpawnBoss};
 use crate::coords::to_world;
 use crate::player::Player;
@@ -41,6 +42,7 @@ fn stage(
     mut beats: MessageWriter<PlayBeat>,
     mut boss: MessageWriter<SpawnBoss>,
     mut player: Single<&mut Transform, With<Player>>,
+    mut next_area: ResMut<NextState<Area>>,
 ) {
     if *done || time.elapsed_secs() < STAGE_AT {
         return;
@@ -48,6 +50,10 @@ fn stage(
     *done = true;
     let Ok(name) = std::env::var("TIDES_STAGE") else { return };
     queue.0.clear();
+    if name == "town" {
+        next_area.set(Area::Town);
+        return;
+    }
     if name == "boss" {
         // Totem already touched, vision dismissed, standing in Grom's room.
         mine::interact(&mut run, Spot::TotemFragment);

@@ -22,6 +22,7 @@ mod physics;
 mod player;
 mod run_state;
 mod tiles_mine;
+mod tiles_town;
 mod ui;
 
 fn main() {
