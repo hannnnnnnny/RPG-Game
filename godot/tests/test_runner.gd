@@ -38,6 +38,9 @@ func _run_suite(path: String) -> void:
 		suite.reset_case()
 		suite.before_each()
 		suite.call(name)
+		# Autoloads are shared by every suite; never let one case's
+		# fixtures leak into the next (e.g. into the UI smoke test).
+		GameState._reset_to_defaults()
 		_record(path.get_file(), name, suite.case_failures())
 	suite.queue_free()
 
