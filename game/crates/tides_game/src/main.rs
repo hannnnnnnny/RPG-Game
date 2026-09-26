@@ -22,6 +22,7 @@ mod lpc;
 mod paint;
 mod physics;
 mod player;
+mod props_art;
 mod run_state;
 mod tiles_mine;
 mod tiles_town;

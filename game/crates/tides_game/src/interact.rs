@@ -21,6 +21,10 @@ pub enum Target {
     Townsfolk(usize),
     /// Flavour text props (notice board, fountain…); cycles lines.
     Sign(&'static str, &'static [&'static str]),
+    /// The smithy anvil: opens the forge.
+    Forge,
+    /// The general store's door.
+    Shop,
 }
 
 #[derive(Component)]
@@ -69,6 +73,9 @@ fn run_target(run: &mut RunRes, it: &mut Interactable) -> PlayBeat {
         Target::MineSpot(s) => mine::interact(run, s),
         Target::Townsfolk(i) => town::talk(run, &town::NPCS[i], it.uses),
         Target::Sign(title, lines) => town::sign(title, lines, it.uses),
+        // Placeholder until the forge/shop menus land.
+        Target::Forge => town::sign("铁砧", &["炉火还热着。老锤说，等你带东西回来再动手。"], it.uses),
+        Target::Shop => town::sign("杂货铺", &["铜婶在柜台后打盹。门口挂着牌子：盘点中。"], it.uses),
     };
     it.uses += 1;
     PlayBeat(beat)

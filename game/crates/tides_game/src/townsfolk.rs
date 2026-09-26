@@ -1,8 +1,11 @@
 //! 灰灯镇 on entry: townsfolk (LPC rigs built from their look), their slow
 //! wandering, the gray lamps, readable props and 克哈's arrival whisper.
 
+use std::collections::HashMap;
+
 use bevy::prelude::*;
-use tides_core::areas::Town;
+use bevy::sprite::Anchor;
+use tides_core::areas::{Pt, Town};
 use tides_core::story::town::{self, Head, Npc, Robe};
 
 use crate::area::Area;
@@ -12,6 +15,7 @@ use crate::interact::{Interactable, Target};
 use crate::lighting::Light;
 use crate::lpc::{Facing, LpcAnim, LpcLayouts, Pose, attach_layers};
 use crate::physics::{Body, Velocity, YSort};
+use crate::props_art::{self, PROP_SCALE, PropArt};
 use crate::run_state::RunRes;
 
 const WANDER_SPEED: f32 = 24.0;
@@ -28,7 +32,8 @@ struct Wander {
 struct ArrivalWhisper;
 
 pub fn plugin(app: &mut App) {
-    app.add_systems(OnEnter(Area::Town), (spawn_folk, spawn_lamps, spawn_signs, |mut c: Commands| c.insert_resource(ArrivalWhisper)))
+    app.init_resource::<PropImages>()
+        .add_systems(OnEnter(Area::Town), (spawn_folk, spawn_lamps, spawn_props, |mut c: Commands| c.insert_resource(ArrivalWhisper)))
         .add_systems(Update, (wander, whisper));
 }
 
@@ -106,18 +111,33 @@ fn wander(time: Res<Time>, mut q: Query<(&mut Wander, &mut Velocity, &mut LpcAni
     }
 }
 
-fn spawn_lamps(mut commands: Commands) {
+/// One image per prop kind, painted once and shared.
+#[derive(Resource, Default)]
+struct PropImages(HashMap<PropArt, Handle<Image>>);
+
+impl PropImages {
+    fn get(&mut self, kind: PropArt, images: &mut Assets<Image>) -> Handle<Image> {
+        self.0.entry(kind).or_insert_with(|| images.add(props_art::image(kind))).clone()
+    }
+}
+
+fn prop(img: Handle<Image>, at: Pt) -> impl Bundle {
+    (
+        DespawnOnExit(Area::Town),
+        Sprite::from_image(img),
+        Anchor::BOTTOM_CENTER,
+        YSort,
+        Transform::from_translation(to_world(at).extend(10.0)).with_scale(Vec3::splat(PROP_SCALE)),
+    )
+}
+
+fn spawn_lamps(mut commands: Commands, mut cache: ResMut<PropImages>, mut images: ResMut<Assets<Image>>) {
+    let img = cache.get(PropArt::LampPost, &mut images);
     for p in Town::LAMPS {
         commands.spawn((
-            DespawnOnExit(Area::Town),
-            Sprite::from_color(Color::srgb(0.24, 0.16, 0.1), Vec2::new(4.0, 40.0)),
-            bevy::sprite::Anchor::BOTTOM_CENTER,
-            YSort,
-            Transform::from_translation(to_world(p).extend(10.0)),
-            children![
-                (Sprite::from_color(Color::srgb(1.0, 0.86, 0.5), Vec2::new(10.0, 8.0)), Transform::from_xyz(0.0, 42.0, 0.1)),
-                (Light::new(Color::srgb(1.0, 0.8, 0.5), 170.0, 0.9).pulsing(0.08), Transform::from_xyz(0.0, 40.0, 0.0)),
-            ],
+            prop(img.clone(), p),
+            // Child offsets are in art pixels (the prop is scaled x3).
+            children![(Light::new(Color::srgb(1.0, 0.8, 0.5), 170.0, 0.9).pulsing(0.08), Transform::from_xyz(0.0, 19.0, 0.0))],
         ));
     }
 }
@@ -128,21 +148,29 @@ const NOTICE_LINES: &[&str] = &[
     "【寻人】我的儿子下矿三天没回。若你见过他……别骗我。",
 ];
 const FOUNTAIN_LINES: &[&str] = &["泉水从石口里淌出来，居然是清的。镇民轮班守着它，像守着最后一盏灯。"];
+const LOCKED_LINES: &[&str] = &["门闩着。屋里有人压低声音说话，一听见脚步就停了。"];
+const CLUTTER: [(PropArt, Pt); 6] = [
+    (PropArt::Barrel, (560.0, 300.0)),
+    (PropArt::Barrel, (578.0, 304.0)),
+    (PropArt::Crate, (820.0, 300.0)),
+    (PropArt::Crate, (280.0, 360.0)),
+    (PropArt::Barrel, (860.0, 560.0)),
+    (PropArt::Crate, (240.0, 420.0)),
+];
 
-fn spawn_signs(mut commands: Commands) {
-    let signs = [
-        (Town::NOTICE, "灰灯镇告示板", NOTICE_LINES, Color::srgb(0.45, 0.3, 0.18), Vec2::new(30.0, 22.0)),
-        (Town::FOUNTAIN, "镇心喷泉", FOUNTAIN_LINES, Color::srgb(0.5, 0.52, 0.56), Vec2::new(44.0, 26.0)),
-    ];
-    for (p, title, lines, color, size) in signs {
-        commands.spawn((
-            DespawnOnExit(Area::Town),
-            Interactable::new(Target::Sign(title, lines), 44.0),
-            Sprite::from_color(color, size),
-            bevy::sprite::Anchor::BOTTOM_CENTER,
-            YSort,
-            Transform::from_translation(to_world(p).extend(10.0)),
-        ));
+fn spawn_props(mut commands: Commands, mut cache: ResMut<PropImages>, mut images: ResMut<Assets<Image>>) {
+    let mut img = |k| cache.get(k, &mut images);
+    commands.spawn((prop(img(PropArt::Notice), Town::NOTICE), Interactable::new(Target::Sign("灰灯镇告示板", NOTICE_LINES), 72.0)));
+    commands.spawn((prop(img(PropArt::Fountain), Town::FOUNTAIN), Interactable::new(Target::Sign("镇心喷泉", FOUNTAIN_LINES), 76.0)));
+    commands.spawn((prop(img(PropArt::Anvil), Town::ANVIL), Interactable::new(Target::Forge, 58.0),
+        children![(Light::new(Color::srgb(1.0, 0.55, 0.25), 120.0, 0.9).pulsing(0.2), Transform::from_xyz(-10.0, 6.0, 0.0))]));
+    for b in Town::BUILDINGS {
+        let foot = (b.rect.x + b.rect.w / 2.0, b.rect.y + b.rect.h);
+        let target = if b.name == "杂货铺" { Target::Shop } else { Target::Sign(b.name, LOCKED_LINES) };
+        commands.spawn((prop(img(PropArt::Door), foot), Interactable::new(target, 76.0)));
+    }
+    for (k, p) in CLUTTER {
+        commands.spawn(prop(img(k), p));
     }
 }
 
