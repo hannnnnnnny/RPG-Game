@@ -7,6 +7,7 @@ use tides_core::mind::{CorruptionTier, SanityTier, vessel_stage_name};
 
 use crate::area::AreaTitle;
 use crate::combat::Vitals;
+use crate::item_icons::ItemIcons;
 use crate::player::{Motion, Player};
 use crate::run_state::RunRes;
 use crate::ui::{CREAM, Fonts, Frame, GOLD_TEXT, INK, INK_PURPLE, INK_RED, INK_SOFT, UiKit, text_font};
@@ -123,7 +124,7 @@ fn spawn_toolbar(mut commands: Commands, kit: Res<UiKit>, fonts: Res<Fonts>) {
                 Node { width: px(58), height: px(58), flex_direction: FlexDirection::Column, align_items: AlignItems::Center, justify_content: JustifyContent::Center, row_gap: px(3), ..default() },
                 children![
                     kit.backdrop(Frame::Slot),
-                    (ToolGem(slot), Node { width: px(16), height: px(16), ..default() }, BackgroundColor(Color::NONE)),
+                    (ToolGem(slot), ImageNode::default(), Node { width: px(36), height: px(36), ..default() }, Visibility::Hidden),
                     (Text::new(name), text_font(&fonts.body, 10.0), TextColor(INK_SOFT)),
                 ],
             ))
@@ -210,17 +211,24 @@ pub fn quality_color(q: Quality) -> Color {
     }
 }
 
-/// A gem in the quality colour marks what's equipped in each slot.
-fn update_toolbar(run: Res<RunRes>, mut gems: Query<(&ToolGem, &mut BackgroundColor)>) {
+/// Each slot shows the icon of what's equipped there (hidden when empty).
+fn update_toolbar(
+    run: Res<RunRes>,
+    mut icons: ResMut<ItemIcons>,
+    mut images: ResMut<Assets<Image>>,
+    mut gems: Query<(&ToolGem, &mut ImageNode, &mut Visibility)>,
+) {
     if !run.is_changed() {
         return;
     }
-    for (gem, mut bg) in &mut gems {
-        bg.0 = run
-            .equipped_items()
-            .find(|i| i.slot == gem.0)
-            .map(|i| quality_color(i.quality))
-            .unwrap_or(Color::NONE);
+    for (gem, mut img, mut vis) in &mut gems {
+        match run.equipped_items().find(|i| i.slot == gem.0) {
+            Some(item) => {
+                img.image = icons.get(item.slot, item.quality, &mut images);
+                *vis = Visibility::Inherited;
+            }
+            None => *vis = Visibility::Hidden,
+        }
     }
 }
 

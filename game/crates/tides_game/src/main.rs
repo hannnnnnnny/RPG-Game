@@ -17,6 +17,7 @@ mod devtools;
 mod enemy;
 mod hud;
 mod interact;
+mod item_icons;
 mod lighting;
 mod lpc;
 mod paint;
@@ -45,7 +46,7 @@ fn main() {
         )
         .insert_resource(ClearColor(Color::srgb(0.05, 0.04, 0.06)))
         // Engine-level services, then world/gameplay, then presentation.
-        .add_plugins((ui::plugin, run_state::plugin, pixelated::plugin, lpc::plugin, devtools::plugin))
+        .add_plugins((ui::plugin, run_state::plugin, pixelated::plugin, lpc::plugin, item_icons::plugin, devtools::plugin))
         .add_plugins((area::plugin, physics::plugin, lighting::plugin, camera::plugin))
         .add_plugins((player::plugin, enemy::plugin, boss::plugin, combat::plugin, spots::plugin, townsfolk::plugin))
         .add_plugins((beats::plugin, dialogue::plugin, modal::plugin, hud::plugin, interact::plugin))
