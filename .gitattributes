@@ -1,0 +1,8 @@
+# Keep scripts LF so bash and Godot read them identically on every OS.
+*.sh text eol=lf
+*.gd text eol=lf
+*.gdshader text eol=lf
+*.tscn text eol=lf
+*.tres text eol=lf
+*.cfg text eol=lf
+*.godot text eol=lf
