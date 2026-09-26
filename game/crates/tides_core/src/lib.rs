@@ -15,3 +15,4 @@ pub mod run;
 pub mod save;
 pub mod map;
 pub mod areas;
+pub mod story;

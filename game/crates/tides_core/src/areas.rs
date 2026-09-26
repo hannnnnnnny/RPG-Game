@@ -46,9 +46,8 @@ impl Mine {
         Self::PATH.windows(2).any(|seg| {
             let (a, b) = (seg[0], seg[1]);
             let d = |p: Pt| ((x - p.0).powi(2) + (y - p.1).powi(2)).sqrt();
-            let len = d(a).max(0.0).min(f32::MAX);
             let seg_len = ((a.0 - b.0).powi(2) + (a.1 - b.1).powi(2)).sqrt();
-            (len + d(b) - seg_len).abs() < 26.0
+            (d(a) + d(b) - seg_len).abs() < 26.0
         })
     }
 }
