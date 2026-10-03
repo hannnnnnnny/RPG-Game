@@ -54,7 +54,7 @@ fn stage(
     *done = true;
     let Ok(name) = std::env::var("TIDES_STAGE") else { return };
     queue.0.clear();
-    if matches!(name.as_str(), "menu" | "journal" | "forge") {
+    if matches!(name.as_str(), "menu" | "journal" | "forge" | "shop") {
         let mut rng = fastrand::Rng::with_seed(7);
         for src in [DropSource::Elite, DropSource::Totem, DropSource::Enemy, DropSource::Enemy, DropSource::Elite] {
             let item = loot::generate(src, 1, &mut rng);
@@ -68,6 +68,7 @@ fn stage(
         *modal = match name.as_str() {
             "menu" => Modal::Menu(MenuTab::Bag),
             "journal" => Modal::Menu(MenuTab::Journal),
+            "shop" => Modal::Shop,
             _ => Modal::Forge,
         };
         return;
