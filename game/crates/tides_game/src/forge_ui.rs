@@ -13,7 +13,7 @@ use crate::beats::Modal;
 use crate::item_icons::ItemIcons;
 use crate::menu::quality_ink;
 use crate::run_state::{GameRng, RunRes};
-use crate::ui::{CREAM, Fonts, Frame, INK, INK_RED, INK_SOFT, UiKit, text_font};
+use crate::ui::{Fonts, Frame, INK, INK_RED, INK_SOFT, UiKit, overlay, plank_button, text_cell, text_font};
 
 const CELL: f32 = 56.0;
 const LIST_COLS: usize = 4;
@@ -178,7 +178,7 @@ fn rebuild(
         return;
     }
     let ctx = Ctx { kit: &kit, font: &fonts.body };
-    commands.spawn(window_root()).with_children(|p| {
+    commands.spawn(overlay(ForgeRoot)).with_children(|p| {
         p.spawn(window_body()).with_children(|p| {
             p.spawn(ctx.kit.backdrop(Frame::Parchment));
             header(p, &ctx, &run);
@@ -189,22 +189,6 @@ fn rebuild(
             status_line(p, &ctx, &st);
         });
     });
-}
-
-fn window_root() -> impl Bundle {
-    (
-        ForgeRoot,
-        Node {
-            position_type: PositionType::Absolute,
-            width: percent(100),
-            height: percent(100),
-            align_items: AlignItems::Center,
-            justify_content: JustifyContent::Center,
-            ..default()
-        },
-        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.45)),
-        GlobalZIndex(20),
-    )
 }
 
 fn window_body() -> Node {
@@ -338,22 +322,12 @@ fn status_line(p: &mut ChildSpawnerCommands, ctx: &Ctx, st: &ForgeState) {
     p.spawn((Text::new(text), text_font(ctx.font, 15.0), TextColor(if err { INK_RED } else { INK_SOFT })));
 }
 
-/// Fixed-width label column. The width lives on a wrapper: a width on the
-/// text node itself makes CJK text measure as one glyph per line.
-fn cell(p: &mut ChildSpawnerCommands, ctx: &Ctx, text: impl Into<String>, size: f32, color: Color, width: f32) {
-    p.spawn(Node { width: px(width), flex_shrink: 0.0, ..default() }).with_children(|p| {
-        p.spawn((Text::new(text), text_font(ctx.font, size), TextColor(color)));
-    });
+fn button(p: &mut ChildSpawnerCommands, ctx: &Ctx, label: &str, action: ForgeButton, enabled: bool) {
+    plank_button(p, ctx.kit, ctx.font, label, action, enabled);
 }
 
-/// A wood-plank button; disabled ones are dimmed and ignore clicks.
-fn button(p: &mut ChildSpawnerCommands, ctx: &Ctx, label: &str, action: ForgeButton, enabled: bool) {
-    let node = Node { padding: UiRect::axes(px(16), px(9)), justify_content: JustifyContent::Center, align_items: AlignItems::Center, ..default() };
-    let ink = if enabled { CREAM } else { CREAM.with_alpha(0.4) };
-    let mut b = p.spawn((node, children![ctx.kit.backdrop(Frame::Plank), (Text::new(label), text_font(ctx.font, 14.0), TextColor(ink))]));
-    if enabled {
-        b.insert((action, Button));
-    }
+fn cell(p: &mut ChildSpawnerCommands, ctx: &Ctx, text: impl Into<String>, size: f32, color: Color, width: f32) {
+    text_cell(p, ctx.font, text, size, color, width);
 }
 
 #[cfg(test)]

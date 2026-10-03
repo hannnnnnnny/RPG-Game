@@ -95,6 +95,43 @@ pub fn label(font: &Handle<Font>, s: &str, size: f32, color: Color) -> impl Bund
     (Text::new(s), text_font(font, size), TextColor(color))
 }
 
+/// Full-screen dimmed layer that centres a window (menu, forge, shop).
+pub fn overlay(marker: impl Bundle) -> impl Bundle {
+    (
+        marker,
+        Node {
+            position_type: PositionType::Absolute,
+            width: percent(100),
+            height: percent(100),
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            ..default()
+        },
+        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.45)),
+        GlobalZIndex(20),
+    )
+}
+
+/// A wood-plank button. Disabled ones are dimmed and never get `action`
+/// (or `Button`), so they can't be clicked.
+pub fn plank_button(p: &mut ChildSpawnerCommands, kit: &UiKit, font: &Handle<Font>, text: &str, action: impl Bundle, enabled: bool) {
+    let node = Node { padding: UiRect::axes(px(16), px(9)), justify_content: JustifyContent::Center, align_items: AlignItems::Center, ..default() };
+    let ink = if enabled { CREAM } else { CREAM.with_alpha(0.4) };
+    let mut b = p.spawn((node, children![kit.backdrop(Frame::Plank), (Text::new(text), text_font(font, 14.0), TextColor(ink))]));
+    if enabled {
+        b.insert((action, Button));
+    }
+}
+
+/// Fixed-width text column. The width lives on a wrapper: a width on the
+/// text node itself makes CJK text measure as one glyph per line.
+pub fn text_cell(p: &mut ChildSpawnerCommands, font: &Handle<Font>, text: impl Into<String>, size: f32, color: Color, width: f32) {
+    p.spawn(Node { width: px(width), flex_shrink: 0.0, ..default() }).with_children(|p| {
+        p.spawn((Text::new(text), text_font(font, size), TextColor(color)));
+    });
+}
+
 // ---------------- Frame painting ----------------
 
 const OUTLINE: [u8; 3] = [59, 28, 10];
