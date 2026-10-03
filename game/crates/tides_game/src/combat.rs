@@ -5,7 +5,9 @@ use bevy::prelude::*;
 use tides_core::areas::Mine;
 use tides_core::combat::{self, KillSource};
 use tides_core::loot::{self, DropSource};
+use tides_core::stats::Stats;
 
+use crate::sfx::{PlaySfx, Sound};
 use crate::boss::Boss;
 use crate::camera::MainCamera;
 use crate::coords::{Z_OVERLAY, to_world};
@@ -84,9 +86,10 @@ fn swing(
     cam: Single<(&Camera, &GlobalTransform), With<MainCamera>>,
     mut player: Single<(&Transform, &mut Vitals, &Motion, &mut LpcAnim), With<Player>>,
     mut enemies: Query<(&Transform, &mut Enemy), Without<Player>>,
-    mut bosses: Query<(&Transform, &mut Boss), (Without<Player>, Without<Enemy>)>,
+    mut bosses: BossQuery,
     run: Res<RunRes>,
     mut rng: ResMut<GameRng>,
+    mut sfx: MessageWriter<PlaySfx>,
 ) {
     let (ptf, ref mut vitals, motion, ref mut anim) = *player;
     vitals.attack_timer = (vitals.attack_timer - time.delta_secs()).max(0.0);
@@ -102,29 +105,60 @@ fn swing(
         .unwrap_or_else(|| anim.facing.vec());
     anim.facing = Facing::from_vec(aim);
     spawn_slash(&mut commands, origin + Vec2::Y * 16.0, aim.to_angle());
-    let stats = run.stats();
-    let in_cone = |target: Vec2, reach: f32| {
-        let to = target - origin;
-        to.length() <= reach && to.angle_to(aim).abs() <= HALF_ARC
-    };
-    for (etf, mut enemy) in &mut enemies {
+    sfx.write(PlaySfx(Sound::Swing));
+    let arc = Arc { origin, aim, stats: run.stats(), since_roll: motion.since_roll };
+    if strike(&mut commands, &arc, &mut enemies, &mut bosses, &mut rng) {
+        sfx.write(PlaySfx(Sound::Hit));
+    }
+}
+
+type BossQuery<'w, 's> = Query<'w, 's, (&'static Transform, &'static mut Boss), (Without<Player>, Without<Enemy>)>;
+
+/// One swing's reach: who it can touch and how hard.
+struct Arc {
+    origin: Vec2,
+    aim: Vec2,
+    stats: Stats,
+    since_roll: f32,
+}
+
+impl Arc {
+    fn covers(&self, target: Vec2, reach: f32) -> bool {
+        let to = target - self.origin;
+        to.length() <= reach && to.angle_to(self.aim).abs() <= HALF_ARC
+    }
+}
+
+/// Damage everything in the arc; true if anything was hit.
+fn strike(
+    commands: &mut Commands,
+    arc: &Arc,
+    enemies: &mut Query<(&Transform, &mut Enemy), Without<Player>>,
+    bosses: &mut BossQuery,
+    rng: &mut fastrand::Rng,
+) -> bool {
+    let mut landed = false;
+    for (etf, mut enemy) in enemies.iter_mut() {
         let epos = etf.translation.truncate();
-        if in_cone(epos, REACH) {
-            let hit = combat::roll_hit(&stats, &mut rng, motion.since_roll);
-            enemy.hit(hit.amount as f32, epos, origin);
-            spawn_number(&mut commands, epos + Vec2::Y * 40.0, hit.amount, hit.crit);
+        if arc.covers(epos, REACH) {
+            let hit = combat::roll_hit(&arc.stats, rng, arc.since_roll);
+            enemy.hit(hit.amount as f32, epos, arc.origin);
+            spawn_number(commands, epos + Vec2::Y * 40.0, hit.amount, hit.crit);
+            landed = true;
         }
     }
     // Grom is big: a little extra reach so hits on him feel fair.
-    for (btf, mut boss) in &mut bosses {
+    for (btf, mut boss) in bosses.iter_mut() {
         let bpos = btf.translation.truncate();
-        if in_cone(bpos, REACH + 24.0) {
-            let hit = combat::roll_hit(&stats, &mut rng, motion.since_roll);
+        if arc.covers(bpos, REACH + 24.0) {
+            let hit = combat::roll_hit(&arc.stats, rng, arc.since_roll);
             boss.brain.take_damage(hit.amount as f32);
             boss.flash = 0.1;
-            spawn_number(&mut commands, bpos + Vec2::Y * 90.0, hit.amount, hit.crit);
+            spawn_number(commands, bpos + Vec2::Y * 90.0, hit.amount, hit.crit);
+            landed = true;
         }
     }
+    landed
 }
 
 fn spawn_slash(commands: &mut Commands, at: Vec2, angle: f32) {
