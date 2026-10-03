@@ -35,6 +35,8 @@ pub enum Modal {
     Forge,
     /// 铜婶's general store.
     Shop,
+    /// The title screen (before any area is entered).
+    Title,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]

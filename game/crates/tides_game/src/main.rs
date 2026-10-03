@@ -31,6 +31,7 @@ mod run_state;
 mod shop_ui;
 mod supplies;
 mod tiles_mine;
+mod title;
 mod tiles_town;
 mod townsfolk;
 mod ui;
@@ -54,6 +55,6 @@ fn main() {
         .add_plugins((ui::plugin, run_state::plugin, pixelated::plugin, lpc::plugin, item_icons::plugin, devtools::plugin, persist::plugin))
         .add_plugins((area::plugin, physics::plugin, lighting::plugin, camera::plugin))
         .add_plugins((player::plugin, enemy::plugin, boss::plugin, combat::plugin, spots::plugin, townsfolk::plugin, supplies::plugin))
-        .add_plugins((beats::plugin, dialogue::plugin, modal::plugin, hud::plugin, interact::plugin, menu::plugin, forge_ui::plugin, shop_ui::plugin))
+        .add_plugins((beats::plugin, dialogue::plugin, modal::plugin, hud::plugin, interact::plugin, menu::plugin, forge_ui::plugin, shop_ui::plugin, title::plugin))
         .run();
 }

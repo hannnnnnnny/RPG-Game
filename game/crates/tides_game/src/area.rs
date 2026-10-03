@@ -18,8 +18,8 @@ use crate::{tiles_mine, tiles_town};
 
 #[derive(States, Default, Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum Area {
-    /// Startup builds the player/UI first; then we enter the first area.
-    /// (The initial state's OnEnter runs before every Startup schedule.)
+    /// Startup builds the player/UI first; the title screen then picks the
+    /// first area. (The initial state's OnEnter runs before Startup.)
     #[default]
     Boot,
     Mine,
@@ -53,7 +53,6 @@ pub fn plugin(app: &mut App) {
         .insert_resource(AreaTitle("黑潮矿区"))
         .insert_resource(AreaBounds(Vec2::ONE))
         .init_resource::<Arrival>()
-        .add_systems(PostStartup, |mut next: ResMut<NextState<Area>>| next.set(Area::Mine))
         .add_systems(OnEnter(Area::Mine), enter_mine)
         .add_systems(OnEnter(Area::Town), enter_town)
         .add_systems(Update, follow_goto);
