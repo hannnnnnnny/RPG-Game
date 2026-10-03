@@ -5,6 +5,7 @@ use std::collections::HashMap;
 
 use bevy::prelude::*;
 use tides_core::item::{Quality, Slot};
+use tides_core::shop::Supply;
 
 use crate::paint::Canvas;
 
@@ -24,11 +25,18 @@ fn palette(q: Quality) -> (Rgb, Rgb) {
 }
 
 #[derive(Resource, Default)]
-pub struct ItemIcons(HashMap<(Slot, Quality), Handle<Image>>);
+pub struct ItemIcons {
+    gear: HashMap<(Slot, Quality), Handle<Image>>,
+    supplies: HashMap<Supply, Handle<Image>>,
+}
 
 impl ItemIcons {
     pub fn get(&mut self, slot: Slot, q: Quality, images: &mut Assets<Image>) -> Handle<Image> {
-        self.0.entry((slot, q)).or_insert_with(|| images.add(paint(slot, q).into_image())).clone()
+        self.gear.entry((slot, q)).or_insert_with(|| images.add(paint(slot, q).into_image())).clone()
+    }
+
+    pub fn supply(&mut self, s: Supply, images: &mut Assets<Image>) -> Handle<Image> {
+        self.supplies.entry(s).or_insert_with(|| images.add(paint_supply(s).into_image())).clone()
     }
 }
 
@@ -36,25 +44,59 @@ pub fn plugin(app: &mut App) {
     app.init_resource::<ItemIcons>();
 }
 
-/// Draw a shape given as rows of chars: '#' outline, 'm' main, 'h' highlight,
-/// 'w' wood/leather, 'g' gem. '.' is transparent.
-fn stamp(rows: &[&str], q: Quality) -> Canvas {
-    let (m, h) = palette(q);
+/// Draw a shape given as rows of chars, colouring each char via `color`
+/// (`None` = transparent).
+fn stamp_with(rows: &[&str], color: impl Fn(char) -> Option<Rgb>) -> Canvas {
     let mut c = Canvas::new(16, 16);
     for (y, row) in rows.iter().enumerate() {
         for (x, ch) in row.chars().enumerate() {
-            let col = match ch {
-                '#' => OUT,
-                'm' => m,
-                'h' => h,
-                'w' => [120, 76, 40],
-                'g' => [230, 60, 90],
-                _ => continue,
-            };
-            c.px(x as u32, y as u32, col);
+            if let Some(col) = color(ch) {
+                c.px(x as u32, y as u32, col);
+            }
         }
     }
     c
+}
+
+/// Gear chars: '#' outline, 'm' main, 'h' highlight, 'w' wood/leather, 'g' gem.
+fn stamp(rows: &[&str], q: Quality) -> Canvas {
+    let (m, h) = palette(q);
+    stamp_with(rows, |ch| match ch {
+        '#' => Some(OUT),
+        'm' => Some(m),
+        'h' => Some(h),
+        'w' => Some([120, 76, 40]),
+        'g' => Some([230, 60, 90]),
+        _ => None,
+    })
+}
+
+/// Supply chars: '#' outline, 'l' liquid, 'L' liquid shine, 'b' glass,
+/// 'k' cork / clay, 's' steam.
+pub fn paint_supply(s: Supply) -> Canvas {
+    let (rows, liquid, shine): (&[&str], Rgb, Rgb) = match s {
+        Supply::HealingDraught => (&[
+            "................", "......####......", "......#kk#......", "......####......",
+            ".......#b#......", ".......#b#......", ".....##bb##.....", "....#bbbbbb#....",
+            "...#llllllll#...", "...#lLllllll#...", "...#lLllllll#...", "...#llllllll#...",
+            "....#llllll#....", ".....######.....", "................", "................",
+        ], [200, 40, 50], [255, 140, 140]),
+        Supply::CalmingTea => (&[
+            "................", "......s..s......", ".......s..s.....", "......s..s......",
+            "................", "...##########...", "...#llllllll####", "...#kLLllllk#..#",
+            "...#kkkkkkkk#..#", "...#kkkkkkkk####", "...#kkkkkkkk#...", "....#kkkkkk#....",
+            ".....######.....", "...##########...", "................", "................",
+        ], [120, 150, 90], [170, 200, 130]),
+    };
+    stamp_with(rows, |ch| match ch {
+        '#' => Some(OUT),
+        'l' => Some(liquid),
+        'L' => Some(shine),
+        'b' => Some([200, 220, 230]),
+        'k' => Some([176, 120, 70]),
+        's' => Some([230, 230, 236]),
+        _ => None,
+    })
 }
 
 pub fn paint(slot: Slot, q: Quality) -> Canvas {
@@ -109,6 +151,14 @@ mod tests {
             let c = paint(slot, Quality::Rare);
             assert_eq!((c.w, c.h), (16, 16));
             assert!(c.data.chunks(4).filter(|p| p[3] > 0).count() > 30, "{slot:?}");
+        }
+    }
+
+    #[test]
+    fn every_supply_icon_is_painted() {
+        for s in Supply::ALL {
+            let c = paint_supply(s);
+            assert!(c.data.chunks(4).filter(|p| p[3] > 0).count() > 30, "{s:?}");
         }
     }
 }
