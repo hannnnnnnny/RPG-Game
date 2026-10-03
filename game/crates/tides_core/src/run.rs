@@ -9,7 +9,9 @@ use serde::{Deserialize, Serialize};
 use crate::aidlc::{self, StateChangeRequest};
 use crate::combat::{self, KillSource};
 use crate::forge::{self, Materials};
+use crate::loot;
 use crate::item::{Affix, Item, ItemId, Slot};
+use crate::shop::{self, Supply, SupplyEffect, Ware};
 use crate::mind::{self, CorruptionTier, Meter, SanityTier};
 use crate::stats::{self, Stats};
 use crate::world::{Effect, Flag, WorldState};
@@ -35,6 +37,7 @@ pub enum ActionError {
     NotEnoughGold,
     NotEnoughMaterials,
     NotAllowed,
+    NoneLeft,
 }
 
 impl ActionError {
@@ -45,6 +48,7 @@ impl ActionError {
             ActionError::NotEnoughGold => "金币不够。",
             ActionError::NotEnoughMaterials => "材料不够。",
             ActionError::NotAllowed => "这件做不了。",
+            ActionError::NoneLeft => "一瓶也不剩了。",
         }
     }
 }
@@ -56,6 +60,9 @@ pub struct Run {
     pub inventory: Vec<Item>,
     pub equipped: BTreeMap<Slot, ItemId>,
     pub materials: Materials,
+    /// Drinkable supplies. `default` keeps saves from before the shop valid.
+    #[serde(default)]
+    pub supplies: BTreeMap<Supply, u32>,
     pub log: VecDeque<String>,
     #[serde(skip)]
     pub events: Vec<RunEvent>,
@@ -73,6 +80,7 @@ impl Run {
             inventory: Vec::new(),
             equipped: BTreeMap::new(),
             materials: Materials::new(),
+            supplies: BTreeMap::new(),
             log: VecDeque::new(),
             events: Vec::new(),
         };
@@ -255,6 +263,49 @@ impl Run {
     }
 }
 
+// ---------------- Shop & supplies ----------------
+
+impl Run {
+    pub fn buy(&mut self, ware: Ware) -> Result<(), ActionError> {
+        let cost = shop::price(ware).ok_or(ActionError::NotAllowed)?;
+        self.spend_gold(cost)?;
+        match ware {
+            Ware::Supply(s) => *self.supplies.entry(s).or_insert(0) += 1,
+            Ware::Material(m) => self.add_materials(&Materials::from([(m, 1)])),
+        }
+        self.log(format!("买下 {}（{cost} 金）。", ware.label()));
+        Ok(())
+    }
+
+    /// Sell a bag item for its sell value. Worn gear must come off first.
+    pub fn sell(&mut self, id: ItemId) -> Result<u32, ActionError> {
+        if self.equipped.values().any(|e| *e == id) {
+            return Err(ActionError::NotAllowed);
+        }
+        let item = self.remove_item(id).ok_or(ActionError::NoSuchItem)?;
+        let gold = loot::sell_value(&item);
+        self.world.gold += gold;
+        self.log(format!("卖掉 {}，得 {gold} 金。", item.title()));
+        Ok(gold)
+    }
+
+    pub fn supply_count(&self, s: Supply) -> u32 {
+        self.supplies.get(&s).copied().unwrap_or(0)
+    }
+
+    /// Drink one. Sanity is applied here; the caller applies `Heal`.
+    pub fn use_supply(&mut self, s: Supply) -> Result<SupplyEffect, ActionError> {
+        let left = self.supplies.get_mut(&s).filter(|n| **n > 0).ok_or(ActionError::NoneLeft)?;
+        *left -= 1;
+        let fx = s.effect();
+        if let SupplyEffect::Sanity(n) = fx {
+            self.change_meter(Meter::Sanity, n);
+        }
+        self.log(format!("喝下{}。", s.label()));
+        Ok(fx)
+    }
+}
+
 // ---------------- World changes ----------------
 
 impl Run {
@@ -408,9 +459,51 @@ mod tests {
 
     #[test]
     fn action_errors_have_distinct_labels() {
-        let all = [ActionError::NoSuchItem, ActionError::NotEnoughGold, ActionError::NotEnoughMaterials, ActionError::NotAllowed];
+        let all = [ActionError::NoSuchItem, ActionError::NotEnoughGold, ActionError::NotEnoughMaterials, ActionError::NotAllowed, ActionError::NoneLeft];
         let labels: std::collections::BTreeSet<_> = all.iter().map(|e| e.label()).collect();
         assert_eq!(labels.len(), all.len());
+    }
+
+    #[test]
+    fn buying_spends_gold_and_stocks_up() {
+        let mut run = Run::new("t");
+        run.world.gold = 50;
+        run.buy(Ware::Supply(Supply::HealingDraught)).unwrap();
+        assert_eq!(run.world.gold, 20);
+        assert_eq!(run.supply_count(Supply::HealingDraught), 1);
+        assert_eq!(run.buy(Ware::Supply(Supply::CalmingTea)), Err(ActionError::NotEnoughGold));
+        assert_eq!(run.buy(Ware::Material(Material::CorruptResidue)), Err(ActionError::NotAllowed));
+    }
+
+    #[test]
+    fn selling_pays_sell_value_but_not_for_worn_gear() {
+        let mut run = Run::new("t");
+        run.add_item(weapon(10));
+        let value = loot::sell_value(run.find_item(ItemId(7)).unwrap());
+        run.equip(ItemId(7)).unwrap();
+        assert_eq!(run.sell(ItemId(7)), Err(ActionError::NotAllowed));
+        run.unequip(Slot::MainHand);
+        assert_eq!(run.sell(ItemId(7)), Ok(value));
+        assert_eq!(run.world.gold, value);
+        assert!(run.find_item(ItemId(7)).is_none());
+    }
+
+    #[test]
+    fn tea_steadies_the_mind_and_runs_out() {
+        let mut run = Run::new("t");
+        run.supplies.insert(Supply::CalmingTea, 1);
+        let before = run.world.sanity;
+        assert_eq!(run.use_supply(Supply::CalmingTea), Ok(SupplyEffect::Sanity(8)));
+        assert_eq!(run.world.sanity, before + 8);
+        assert_eq!(run.use_supply(Supply::CalmingTea), Err(ActionError::NoneLeft));
+    }
+
+    #[test]
+    fn old_saves_without_supplies_still_load() {
+        let mut json = serde_json::to_value(Run::new("t")).unwrap();
+        json.as_object_mut().unwrap().remove("supplies");
+        let run: Run = serde_json::from_value(json).unwrap();
+        assert!(run.supplies.is_empty());
     }
 
     #[test]
