@@ -5,6 +5,7 @@ use std::collections::HashMap;
 
 use bevy::prelude::*;
 use tides_core::item::{Quality, Slot};
+use tides_core::forge::Material;
 use tides_core::shop::Supply;
 
 use crate::paint::Canvas;
@@ -28,6 +29,7 @@ fn palette(q: Quality) -> (Rgb, Rgb) {
 pub struct ItemIcons {
     gear: HashMap<(Slot, Quality), Handle<Image>>,
     supplies: HashMap<Supply, Handle<Image>>,
+    materials: HashMap<Material, Handle<Image>>,
 }
 
 impl ItemIcons {
@@ -37,6 +39,10 @@ impl ItemIcons {
 
     pub fn supply(&mut self, s: Supply, images: &mut Assets<Image>) -> Handle<Image> {
         self.supplies.entry(s).or_insert_with(|| images.add(paint_supply(s).into_image())).clone()
+    }
+
+    pub fn material(&mut self, m: Material, images: &mut Assets<Image>) -> Handle<Image> {
+        self.materials.entry(m).or_insert_with(|| images.add(paint_material(m).into_image())).clone()
     }
 }
 
@@ -141,6 +147,41 @@ pub fn paint(slot: Slot, q: Quality) -> Canvas {
     stamp(rows, q)
 }
 
+/// Material chars: '#' outline, 'm' main, 'h' highlight, 'd' shade.
+pub fn paint_material(m: Material) -> Canvas {
+    let (rows, main, hi, dark): (&[&str], Rgb, Rgb, Rgb) = match m {
+        // A bundle of iron scraps tied with cord.
+        Material::Common => (&[
+            "................", "................", "................", "....##..........",
+            "...#hm#...##....", "...#mmm#.#hm#...", "....#mmm#mmd#...", ".....#mmmmd#....",
+            "....##wwwww##...", "...#hmmmmmmmd#..", "..#hmmmdmmmmmd#.", "..#mmmmmmmdmmd#.",
+            "...#ddmmmmmdd#..", "....#########...", "................", "................",
+        ], [150, 150, 158], [210, 212, 220], [100, 100, 108]),
+        // A cut blue crystal.
+        Material::Rare => (&[
+            "................", ".......##.......", "......#hh#......", ".....#hhmm#.....",
+            "....#hhmmmd#....", "...#hhmmmmdd#...", "...#hmmmmmdd#...", "...#hmmmmmdd#...",
+            "...#hmmmmmdd#...", "...#hmmmmmdd#...", "....#mmmmdd#....", ".....#mmdd#.....",
+            "......#dd#......", ".......##.......", "................", "................",
+        ], [70, 130, 220], [170, 210, 255], [40, 80, 160]),
+        // A blot of black-tide sludge.
+        Material::CorruptResidue => (&[
+            "................", "................", "................", "................",
+            "......###.......", ".....#hmm#..##..", "....#hmmmm##hm#.", "...#hmmmmmmmmd#.",
+            "..#mmmmmmmmmmd#.", "..#mmmmdmmmmdd#.", "...#mmmddmmdd#..", "....##dddddd#...",
+            "......######....", "................", "................", "................",
+        ], [90, 40, 110], [170, 100, 200], [50, 20, 64]),
+    };
+    stamp_with(rows, |ch| match ch {
+        '#' => Some(OUT),
+        'm' => Some(main),
+        'h' => Some(hi),
+        'd' => Some(dark),
+        'w' => Some([176, 120, 70]),
+        _ => None,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -151,6 +192,14 @@ mod tests {
             let c = paint(slot, Quality::Rare);
             assert_eq!((c.w, c.h), (16, 16));
             assert!(c.data.chunks(4).filter(|p| p[3] > 0).count() > 30, "{slot:?}");
+        }
+    }
+
+    #[test]
+    fn every_material_icon_is_painted() {
+        for m in Material::ALL {
+            let c = paint_material(m);
+            assert!(c.data.chunks(4).filter(|p| p[3] > 0).count() > 30, "{m:?}");
         }
     }
 
