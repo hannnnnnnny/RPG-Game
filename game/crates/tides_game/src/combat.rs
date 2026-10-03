@@ -142,13 +142,12 @@ fn spawn_number(commands: &mut Commands, at: Vec2, amount: i32, crit: bool) {
     } else {
         (amount.to_string(), 18.0, Color::srgb(1.0, 0.95, 0.72))
     };
-    commands.spawn((
-        Floater { life: 0.6 },
-        Text2d::new(text),
-        TextFont { font_size: FontSize::Px(size), ..default() },
-        TextColor(color),
-        Transform::from_translation(at.extend(Z_OVERLAY + 1.0)),
-    ));
+    float_text(commands, at, text, TextFont { font_size: FontSize::Px(size), ..default() }, color);
+}
+
+/// World-space text that drifts up and fades (damage, heals, refusals).
+pub fn float_text(commands: &mut Commands, at: Vec2, text: String, font: TextFont, color: Color) {
+    commands.spawn((Floater { life: 0.6 }, Text2d::new(text), font, TextColor(color), Transform::from_translation(at.extend(Z_OVERLAY + 1.0))));
 }
 
 fn float_up(mut commands: Commands, time: Res<Time>, mut q: Query<(Entity, &mut Floater, &mut Transform, &mut TextColor)>) {
