@@ -78,7 +78,10 @@ fn run_target(run: &mut RunRes, it: &mut Interactable, modal: &mut Modal) -> Opt
             *modal = Modal::Forge;
             return None;
         }
-        Target::Shop => town::sign("杂货铺", &["铜婶在柜台后打盹。门口挂着牌子：盘点中。"], it.uses),
+        Target::Shop => {
+            *modal = Modal::Shop;
+            return None;
+        }
     };
     it.uses += 1;
     Some(PlayBeat(beat))
@@ -97,10 +100,10 @@ fn interact(
     }
     let found = nearest(player.translation.truncate(), &run, &collect(all.iter()));
     let Some((e, _)) = found else { return };
-    if let Ok((_, _, mut it)) = all.get_mut(e) {
-        if let Some(beat) = run_target(&mut run, &mut it, &mut modal) {
-            beats.write(beat);
-        }
+    if let Ok((_, _, mut it)) = all.get_mut(e)
+        && let Some(beat) = run_target(&mut run, &mut it, &mut modal)
+    {
+        beats.write(beat);
     }
 }
 

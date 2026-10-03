@@ -27,6 +27,7 @@ mod physics;
 mod player;
 mod props_art;
 mod run_state;
+mod shop_ui;
 mod supplies;
 mod tiles_mine;
 mod tiles_town;
@@ -52,6 +53,6 @@ fn main() {
         .add_plugins((ui::plugin, run_state::plugin, pixelated::plugin, lpc::plugin, item_icons::plugin, devtools::plugin))
         .add_plugins((area::plugin, physics::plugin, lighting::plugin, camera::plugin))
         .add_plugins((player::plugin, enemy::plugin, boss::plugin, combat::plugin, spots::plugin, townsfolk::plugin, supplies::plugin))
-        .add_plugins((beats::plugin, dialogue::plugin, modal::plugin, hud::plugin, interact::plugin, menu::plugin, forge_ui::plugin))
+        .add_plugins((beats::plugin, dialogue::plugin, modal::plugin, hud::plugin, interact::plugin, menu::plugin, forge_ui::plugin, shop_ui::plugin))
         .run();
 }
