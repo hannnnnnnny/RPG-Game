@@ -43,10 +43,16 @@ fn main() {
         .add_plugins(
             DefaultPlugins
                 .set(ImagePlugin::default_nearest()) // crisp pixel art
+                // No .meta sidecars exist; don't probe for them (404s on the web).
+                .set(AssetPlugin { meta_check: bevy::asset::AssetMetaCheck::Never, ..default() })
                 .set(WindowPlugin {
                     primary_window: Some(Window {
                         title: "潮蚀之环 · Tides of Khah".into(),
                         resolution: (1280, 720).into(),
+                        // Web: render into the page's canvas and track its size.
+                        canvas: Some("#game".into()),
+                        fit_canvas_to_parent: true,
+                        prevent_default_event_handling: true,
                         ..default()
                     }),
                     ..default()
