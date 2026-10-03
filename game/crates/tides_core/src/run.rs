@@ -23,6 +23,22 @@ pub struct Profile {
     pub name: String,
 }
 
+/// Longest name the HUD and dialogue boxes are laid out for.
+pub const NAME_MAX_CHARS: usize = 8;
+
+impl Profile {
+    /// Clean a typed name: drop control characters, collapse runs of
+    /// whitespace, trim, and cut to `NAME_MAX_CHARS`. `None` if nothing
+    /// printable is left.
+    pub fn sanitize_name(input: &str) -> Option<String> {
+        let cleaned: String = input.chars().filter(|c| !c.is_control()).collect();
+        let joined = cleaned.split_whitespace().collect::<Vec<_>>().join(" ");
+        let name: String = joined.chars().take(NAME_MAX_CHARS).collect();
+        let name = name.trim_end().to_string();
+        (!name.is_empty()).then_some(name)
+    }
+}
+
 /// Things the presentation layer should react to (drained each frame).
 #[derive(Clone, Debug, PartialEq)]
 pub enum RunEvent {
@@ -390,6 +406,15 @@ mod tests {
 
     fn req(kind: ChangeKind, effects: Vec<Effect>) -> StateChangeRequest {
         StateChangeRequest { kind, requested_by: "测试".into(), reason: String::new(), effects }
+    }
+
+    #[test]
+    fn names_are_cleaned_and_capped() {
+        assert_eq!(Profile::sanitize_name("  迪丝 "), Some("迪丝".into()));
+        assert_eq!(Profile::sanitize_name("a\u{0}b\n  c"), Some("ab c".into()));
+        assert_eq!(Profile::sanitize_name("一二三四五六七八九十"), Some("一二三四五六七八".into()));
+        assert_eq!(Profile::sanitize_name("abcdefg hij"), Some("abcdefg".into()));
+        assert_eq!(Profile::sanitize_name(" \t\r "), None);
     }
 
     #[test]
