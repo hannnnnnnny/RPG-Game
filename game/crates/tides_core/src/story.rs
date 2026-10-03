@@ -3,6 +3,7 @@
 //! only presents beats. Keeping this pure makes the plot unit-testable.
 
 use crate::aidlc::{ChangeKind, StateChangeRequest};
+use crate::areas::{Mine, Pt};
 use crate::combat::KillSource;
 use crate::loot::DropSource;
 use crate::mind::Meter;
@@ -87,6 +88,33 @@ fn request(kind: ChangeKind, by: &str, reason: &str, effects: Vec<Effect>) -> St
     StateChangeRequest { kind, requested_by: by.to_string(), reason: reason.to_string(), effects }
 }
 
+/// Where a loaded run picks up: the furthest place the story has reached,
+/// and a spawn point there (`None` = that area's usual entrance).
+pub fn resume_point(run: &Run) -> (AreaId, Option<Pt>) {
+    if run.world.has(Flag::EscapedMine) {
+        (AreaId::Town, None)
+    } else if run.world.has(Flag::TouchedTotemFragment) {
+        (AreaId::Mine, Some(Mine::TOTEM_CHECKPOINT))
+    } else {
+        (AreaId::Mine, None)
+    }
+}
+
 pub mod mine;
 pub mod town;
 pub mod journal;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn resume_follows_story_progress() {
+        let mut run = Run::new("t");
+        assert_eq!(resume_point(&run), (AreaId::Mine, None));
+        run.world.flags.insert(Flag::TouchedTotemFragment);
+        assert_eq!(resume_point(&run), (AreaId::Mine, Some(Mine::TOTEM_CHECKPOINT)));
+        run.world.flags.insert(Flag::EscapedMine);
+        assert_eq!(resume_point(&run), (AreaId::Town, None));
+    }
+}
