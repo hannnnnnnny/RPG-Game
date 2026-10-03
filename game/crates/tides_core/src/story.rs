@@ -103,6 +103,7 @@ pub fn resume_point(run: &Run) -> (AreaId, Option<Pt>) {
 pub mod mine;
 pub mod town;
 pub mod journal;
+pub mod survivor;
 
 #[cfg(test)]
 mod tests {
