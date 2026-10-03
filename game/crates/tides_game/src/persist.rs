@@ -161,6 +161,7 @@ mod tests {
         assert!(slot.exists());
         assert_eq!(slot.read().unwrap(), Some(run));
         assert!(!slot.dir.join("save.json.tmp").exists());
+        fs::remove_dir_all(&slot.dir).unwrap();
     }
 
     #[test]
@@ -169,5 +170,6 @@ mod tests {
         fs::create_dir_all(&slot.dir).unwrap();
         fs::write(slot.path(), "{ nope").unwrap();
         assert!(matches!(slot.read(), Err(SaveError::Load(LoadError::Corrupt(_)))));
+        fs::remove_dir_all(&slot.dir).unwrap();
     }
 }
