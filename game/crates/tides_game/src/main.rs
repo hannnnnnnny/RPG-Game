@@ -15,6 +15,7 @@ mod combat;
 mod coords;
 mod devtools;
 mod enemy;
+mod forge_ui;
 mod hud;
 mod interact;
 mod item_icons;
@@ -50,6 +51,6 @@ fn main() {
         .add_plugins((ui::plugin, run_state::plugin, pixelated::plugin, lpc::plugin, item_icons::plugin, devtools::plugin))
         .add_plugins((area::plugin, physics::plugin, lighting::plugin, camera::plugin))
         .add_plugins((player::plugin, enemy::plugin, boss::plugin, combat::plugin, spots::plugin, townsfolk::plugin))
-        .add_plugins((beats::plugin, dialogue::plugin, modal::plugin, hud::plugin, interact::plugin, menu::plugin))
+        .add_plugins((beats::plugin, dialogue::plugin, modal::plugin, hud::plugin, interact::plugin, menu::plugin, forge_ui::plugin))
         .run();
 }

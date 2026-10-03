@@ -301,7 +301,7 @@ fn tooltip(
 }
 
 /// Quality colours darkened so they read on parchment.
-fn quality_ink(item: &Item) -> Color {
+pub fn quality_ink(item: &Item) -> Color {
     let c = quality_color(item.quality).to_srgba();
     Color::srgb(c.red * 0.62, c.green * 0.55, c.blue * 0.55)
 }

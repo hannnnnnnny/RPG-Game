@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use tides_core::story::mine::{self, Spot};
 use tides_core::story::town;
 
-use crate::beats::PlayBeat;
+use crate::beats::{Modal, PlayBeat};
 use crate::coords::Z_OVERLAY;
 use crate::dialogue::InteractPressed;
 use crate::player::Player;
@@ -68,17 +68,20 @@ fn collect<'a>(items: impl Iterator<Item = (Entity, &'a GlobalTransform, &'a Int
     items.map(|(e, gt, i)| (e, gt.translation().truncate(), i.target)).collect()
 }
 
-fn run_target(run: &mut RunRes, it: &mut Interactable) -> PlayBeat {
+/// Story targets play a beat; workshop targets open their window instead.
+fn run_target(run: &mut RunRes, it: &mut Interactable, modal: &mut Modal) -> Option<PlayBeat> {
     let beat = match it.target {
         Target::MineSpot(s) => mine::interact(run, s),
         Target::Townsfolk(i) => town::talk(run, &town::NPCS[i], it.uses),
         Target::Sign(title, lines) => town::sign(title, lines, it.uses),
-        // Placeholder until the forge/shop menus land.
-        Target::Forge => town::sign("铁砧", &["炉火还热着。老锤说，等你带东西回来再动手。"], it.uses),
+        Target::Forge => {
+            *modal = Modal::Forge;
+            return None;
+        }
         Target::Shop => town::sign("杂货铺", &["铜婶在柜台后打盹。门口挂着牌子：盘点中。"], it.uses),
     };
     it.uses += 1;
-    PlayBeat(beat)
+    Some(PlayBeat(beat))
 }
 
 fn interact(
@@ -87,6 +90,7 @@ fn interact(
     mut all: Query<(Entity, &GlobalTransform, &mut Interactable)>,
     mut run: ResMut<RunRes>,
     mut beats: MessageWriter<PlayBeat>,
+    mut modal: ResMut<Modal>,
 ) {
     if pressed.read().count() == 0 {
         return;
@@ -94,7 +98,9 @@ fn interact(
     let found = nearest(player.translation.truncate(), &run, &collect(all.iter()));
     let Some((e, _)) = found else { return };
     if let Ok((_, _, mut it)) = all.get_mut(e) {
-        beats.write(run_target(&mut run, &mut it));
+        if let Some(beat) = run_target(&mut run, &mut it, &mut modal) {
+            beats.write(beat);
+        }
     }
 }
 
