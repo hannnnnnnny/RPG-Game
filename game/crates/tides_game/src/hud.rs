@@ -39,8 +39,6 @@ enum BarFill {
 }
 
 #[derive(Component)]
-struct ToolSlot(Slot);
-#[derive(Component)]
 struct ToolGem(Slot);
 /// A supply cell's icon (dimmed when none are left) and its count.
 #[derive(Component)]
@@ -128,7 +126,6 @@ fn spawn_toolbar(mut commands: Commands, kit: Res<UiKit>, fonts: Res<Fonts>) {
     for (slot, name) in TOOLBAR {
         let cell = commands
             .spawn((
-                ToolSlot(slot),
                 Node { width: px(58), height: px(58), flex_direction: FlexDirection::Column, align_items: AlignItems::Center, justify_content: JustifyContent::Center, row_gap: px(3), ..default() },
                 children![
                     kit.backdrop(Frame::Slot),
@@ -199,7 +196,7 @@ fn group_digits(n: u32) -> String {
     let s = n.to_string();
     let mut out = String::new();
     for (i, ch) in s.chars().enumerate() {
-        if i > 0 && (s.len() - i) % 3 == 0 {
+        if i > 0 && (s.len() - i).is_multiple_of(3) {
             out.push(',');
         }
         out.push(ch);

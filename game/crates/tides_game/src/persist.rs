@@ -27,6 +27,16 @@ pub enum SaveError {
     Load(LoadError),
 }
 
+impl std::fmt::Display for SaveError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            SaveError::Io(e) => write!(f, "读写失败：{e}"),
+            SaveError::Load(LoadError::Corrupt(_)) => write!(f, "内容损坏"),
+            SaveError::Load(LoadError::TooNew(v)) => write!(f, "来自更新的版本 v{v}"),
+        }
+    }
+}
+
 impl From<io::Error> for SaveError {
     fn from(e: io::Error) -> Self {
         SaveError::Io(e)
@@ -56,10 +66,6 @@ impl SaveSlot {
 
     fn path(&self) -> PathBuf {
         self.dir.join(FILE)
-    }
-
-    pub fn exists(&self) -> bool {
-        self.path().is_file()
     }
 
     /// `Ok(None)` when there is simply no save yet.
@@ -109,7 +115,7 @@ fn store(slot: &SaveSlot, auto: &Autosave, run: &Run) {
         return;
     }
     if let Err(e) = slot.write(run) {
-        warn!("autosave failed: {e:?}");
+        warn!("autosave failed: {e}");
     }
 }
 
@@ -147,7 +153,7 @@ mod tests {
     #[test]
     fn missing_save_is_none_not_an_error() {
         let slot = temp_slot("missing");
-        assert!(!slot.exists());
+        assert!(!slot.path().is_file());
         assert!(matches!(slot.read(), Ok(None)));
     }
 
@@ -158,7 +164,7 @@ mod tests {
         run.world.gold = 77;
         run.drain_events();
         slot.write(&run).unwrap();
-        assert!(slot.exists());
+        assert!(slot.path().is_file());
         assert_eq!(slot.read().unwrap(), Some(run));
         assert!(!slot.dir.join("save.json.tmp").exists());
         fs::remove_dir_all(&slot.dir).unwrap();

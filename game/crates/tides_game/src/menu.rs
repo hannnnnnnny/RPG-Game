@@ -265,6 +265,7 @@ fn tooltip_text(item: &Item) -> String {
     s + &format!("售价 {} 金", loot::sell_value(item))
 }
 
+#[allow(clippy::too_many_arguments)] // a Bevy system: each param is one resource or query
 fn tooltip(
     mut commands: Commands,
     hovered: Res<Hovered>,

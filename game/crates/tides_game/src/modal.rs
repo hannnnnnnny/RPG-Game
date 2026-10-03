@@ -23,6 +23,7 @@ pub fn plugin(app: &mut App) {
     app.add_systems(Update, (rebuild, choose, close_vision, hover));
 }
 
+#[allow(clippy::too_many_arguments)] // a Bevy system: each param is one resource or query
 fn rebuild(
     mut commands: Commands,
     modal: Res<Modal>,
@@ -137,9 +138,11 @@ fn close_vision(keys: Res<ButtonInput<KeyCode>>, q: Query<&Interaction, With<Clo
     }
 }
 
+type OptionHover<'w, 's> = Query<'w, 's, (&'static Interaction, &'static Children, &'static mut BackgroundColor), (With<OptionButton>, Changed<Interaction>)>;
+
 /// Hovered answer: tan highlight and a ▶ pointer in front of its label.
 fn hover(
-    mut q: Query<(&Interaction, &Children, &mut BackgroundColor), (With<OptionButton>, Changed<Interaction>)>,
+    mut q: OptionHover,
     mut texts: Query<&mut Text>,
 ) {
     for (i, children, mut bg) in &mut q {

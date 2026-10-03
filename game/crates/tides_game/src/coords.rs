@@ -1,4 +1,4 @@
-//! Map space (design docs, y down) ↔ Bevy world space (y up), plus draw order.
+//! Map space (design docs, y down) → Bevy world space (y up), plus draw order.
 
 use bevy::prelude::*;
 use tides_core::areas::Pt;
@@ -8,10 +8,6 @@ pub const Z_OVERLAY: f32 = 50.0;
 
 pub fn to_world(p: Pt) -> Vec2 {
     Vec2::new(p.0, -p.1)
-}
-
-pub fn to_map(v: Vec2) -> Pt {
-    (v.x, -v.y)
 }
 
 /// Y-sort for a top-down view: things lower on screen draw in front.
@@ -25,8 +21,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn roundtrip() {
-        assert_eq!(to_map(to_world((3.0, 4.0))), (3.0, 4.0));
+    fn map_y_points_down_world_y_points_up() {
+        assert_eq!(to_world((3.0, 4.0)), Vec2::new(3.0, -4.0));
     }
 
     #[test]

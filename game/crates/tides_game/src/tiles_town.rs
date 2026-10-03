@@ -51,7 +51,7 @@ fn plank(c: &mut Canvas, cell: &Cell) {
         c.fill(x, y + seam, 16, 1, [112, 76, 42]);
     }
     // Staggered board ends.
-    let off = if cell.row % 2 == 0 { 4 } else { 11 };
+    let off = if cell.row.is_multiple_of(2) { 4 } else { 11 };
     c.fill(x + off, y + 1, 1, 4, [112, 76, 42]);
     c.fill(x + (off + 7) % 16, y + 6, 1, 4, [112, 76, 42]);
     if cell.noise(1) < 0.3 {
@@ -65,7 +65,7 @@ fn roof(c: &mut Canvas, cell: &Cell) {
     c.fill(x, y, 16, 16, [84, 86, 108]);
     for (i, row) in [0u32, 4, 8, 12].iter().enumerate() {
         c.fill(x, y + row + 3, 16, 1, [54, 54, 74]);
-        let off = if (cell.row + i as u32) % 2 == 0 { 0 } else { 4 };
+        let off = if (cell.row + i as u32).is_multiple_of(2) { 0 } else { 4 };
         for sx in (off..16).step_by(8) {
             c.fill(x + sx, y + row, 1, 3, [60, 60, 80]);
         }
@@ -95,7 +95,7 @@ fn stone_wall(c: &mut Canvas, cell: &Cell) {
     let mortar = [64, 60, 58];
     c.fill(x, y + 7, 16, 1, mortar);
     c.fill(x, y + 15, 16, 1, mortar);
-    let off = if cell.row % 2 == 0 { 6 } else { 11 };
+    let off = if cell.row.is_multiple_of(2) { 6 } else { 11 };
     c.fill(x + off, y, 1, 7, mortar);
     c.fill(x + (off + 8) % 16, y + 8, 1, 7, mortar);
     c.fill(x, y, 16, 1, [122, 118, 112]);

@@ -60,7 +60,7 @@ fn boot(mut commands: Commands, slot: Res<SaveSlot>, mut modal: ResMut<Modal>, m
     let save = match slot.read() {
         Ok(Some(run)) => SaveInfo::Found(Box::new(run)),
         Ok(None) => SaveInfo::None,
-        Err(e) => SaveInfo::Broken(format!("{e:?}")),
+        Err(e) => SaveInfo::Broken(e.to_string()),
     };
     commands.insert_resource(TitleState { save, name: DEFAULT_NAME.into(), confirm_new: false });
     *modal = Modal::Title;

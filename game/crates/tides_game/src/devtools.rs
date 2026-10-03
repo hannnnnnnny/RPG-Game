@@ -37,6 +37,7 @@ pub fn plugin(app: &mut App) {
 const STAGE_AT: f32 = 1.0;
 
 /// Drive the story into a named state, once, shortly after start.
+#[allow(clippy::too_many_arguments)] // a Bevy system: each param is one resource or query
 fn stage(
     time: Res<Time>,
     mut done: Local<bool>,

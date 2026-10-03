@@ -91,9 +91,6 @@ pub fn text_font(font: &Handle<Font>, size: f32) -> TextFont {
     TextFont { font: font.clone().into(), font_size: FontSize::Px(size), ..default() }
 }
 
-pub fn label(font: &Handle<Font>, s: &str, size: f32, color: Color) -> impl Bundle {
-    (Text::new(s), text_font(font, size), TextColor(color))
-}
 
 /// Full-screen dimmed layer that centres a window (menu, forge, shop).
 pub fn overlay(marker: impl Bundle) -> impl Bundle {

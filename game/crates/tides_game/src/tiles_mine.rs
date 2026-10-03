@@ -26,7 +26,7 @@ fn wall(c: &mut Canvas, cell: &Cell) {
     c.fill(x + 14, y, 2, 16, [30, 22, 36]);
     c.fill(x, y + 7, 16, 1, MORTAR);
     // Offset seams row to row → brick bond.
-    let (top, bottom) = if cell.row % 2 == 0 { (8, 4) } else { (4, 11) };
+    let (top, bottom) = if cell.row.is_multiple_of(2) { (8, 4) } else { (4, 11) };
     c.fill(x + top, y, 1, 7, MORTAR);
     c.fill(x + bottom, y + 8, 1, 6, MORTAR);
     if cell.noise(1) < 0.26 {
