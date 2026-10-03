@@ -3,6 +3,7 @@
 //! - `TIDES_CAPTURE=path.png` — screenshot after a few seconds, then quit.
 //! - `TIDES_STAGE=<name>` — put the world in a known state first
 //!   (see `stage`), e.g. `forge` or `combat`.
+//! - `TIDES_QUIET=1` — keep dialogue cleared, for scenery shots.
 
 use bevy::prelude::*;
 use bevy::render::view::screenshot::{Screenshot, save_to_disk};
@@ -11,8 +12,10 @@ use tides_core::forge::Material;
 use tides_core::shop::Supply;
 use tides_core::loot::{self, DropSource};
 use tides_core::story::mine::{self, Spot};
+use tides_core::story::survivor;
+use tides_core::world::{DwarfChoice, Flag};
 
-use crate::area::Area;
+use crate::area::{Area, Arrival};
 use crate::beats::{DialogueQueue, MenuTab, Modal, PlayBeat, SpawnBoss};
 use crate::coords::to_world;
 use crate::player::Player;
@@ -32,6 +35,9 @@ pub fn plugin(app: &mut App) {
         app.insert_resource(Capture { path, taken: false }).add_systems(Update, capture);
     }
     app.add_systems(Update, stage);
+    if std::env::var_os("TIDES_QUIET").is_some() {
+        app.add_systems(Update, |mut q: ResMut<DialogueQueue>| q.0.clear());
+    }
 }
 
 const STAGE_AT: f32 = 1.0;
@@ -48,6 +54,7 @@ fn stage(
     mut player: Single<&mut Transform, With<Player>>,
     mut next_area: ResMut<NextState<Area>>,
     mut modal: ResMut<Modal>,
+    mut arrival: ResMut<Arrival>,
 ) {
     if *done || time.elapsed_secs() < STAGE_AT {
         return;
@@ -76,6 +83,16 @@ fn stage(
     }
     if name == "town" {
         next_area.set(Area::Town);
+        return;
+    }
+    if name == "follow" || name == "brin" {
+        // 布林 saved: trailing you in the mine, or waiting by the forge.
+        mine::choose(&mut run, DwarfChoice::Save);
+        if name == "brin" {
+            run.world.flags.insert(Flag::EscapedMine);
+            arrival.0 = Some((survivor::TOWN_POS.0 - 70.0, survivor::TOWN_POS.1 + 10.0));
+            next_area.set(Area::Town);
+        }
         return;
     }
     if name == "boss" {
