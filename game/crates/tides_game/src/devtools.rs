@@ -104,6 +104,13 @@ fn stage(
         player.translation.y = p.y;
         return;
     }
+    if name == "escape" {
+        // Totem touched and Grom down: the real exit beat should carry us to town.
+        run.world.flags.insert(Flag::TouchedTotemFragment);
+        run.world.flags.insert(Flag::DefeatedGrom);
+        beats.write(PlayBeat(mine::interact(&mut run, Spot::Exit)));
+        return;
+    }
     let (spot, at) = match name.as_str() {
         "choice" => (Spot::InjuredDwarf, Mine::INJURED_DWARF),
         "vision" => (Spot::TotemFragment, Mine::TOTEM),
