@@ -59,7 +59,9 @@ func _handle_totem() -> void:
 		"effects": [
 			{"path": "flags.touched_totem_fragment", "value": true},
 			{"path": "vessel_awakening", "value": 2},
-			{"path": "corruption", "value": min(100, GameState.world_state.corruption + 4)}
+			{"path": "corruption", "delta": 4},
+			# Seeing the captain consumed shakes you (design: visions cost 理智).
+			{"path": "sanity", "delta": -6}
 		]
 	})
 	if approved:

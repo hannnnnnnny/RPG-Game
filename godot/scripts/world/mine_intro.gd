@@ -34,6 +34,9 @@ const PATH_POINTS := [
 
 const LIGHT_TEX := preload("res://assets/textures/light_soft.tres")
 
+# Safe point after the totem vision, just short of Grom's room.
+const TOTEM_CHECKPOINT := Vector2(870, 400)
+
 @onready var player: Player = $Entities/Player
 @onready var camera: Camera2D = $Entities/Player/Camera2D
 @onready var enemies_root: Node2D = $Entities  # y-sorted with player/interactables
@@ -50,6 +53,7 @@ var world_tex: ImageTexture  # Baked pixel-art tile map (replaces flat color blo
 var boss: Boss = null
 var _boss_spawned: bool = false
 var follower: Follower = null
+var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -64,6 +68,8 @@ func _ready() -> void:
 	GameState.world_state_changed.connect(_on_world_changed)
 	Audio.start_ambient()
 
+	if GameState.world_state.flags.get("touched_totem_fragment", false):
+		player.respawn_point = TOTEM_CHECKPOINT
 	# On reload: if the dwarf was already rescued, he's still tagging along.
 	if GameState.world_state.flags.get("first_dwarf_choice", "") == "save":
 		_spawn_follower()
@@ -321,6 +327,8 @@ func _on_world_changed(path: String, value: Variant) -> void:
 	# his corrupted form as the boss, guarding the exit.
 	if path == "flags.touched_totem_fragment" and value == true and not _boss_spawned:
 		_spawn_boss()
+		# Checkpoint: dying to Grom sends you back to the totem, not the start.
+		player.respawn_point = TOTEM_CHECKPOINT
 	# Choosing to save the injured dwarf — he gets up and follows you.
 	if path == "flags.first_dwarf_choice" and value == "save":
 		_spawn_follower()
@@ -391,7 +399,7 @@ func _on_boss_died() -> void:
 		]
 	})
 	# Guaranteed strong drop + gold for the kill.
-	GameState.add_gold(LootGenerator.gold_for_kill("boss", GameState.world_state.world_tier))
+	GameState.add_kill_gold("boss")
 	GameState.add_item(LootGenerator.generate_loot("elite", GameState.world_state.world_tier))
 	objective_label.text = "目标：黑潮退去了。前往矿井出口，逃向灰灯镇。"
 	GameState.set_dialogue({
@@ -410,7 +418,7 @@ func _on_player_attack(aim_angle: float, pos: Vector2) -> void:
 	# visual so hits feel forgiving. Damage comes from the equipped weapon.
 	const REACH := 70.0
 	const HALF_ARC := PI / 2.4
-	var dmg: int = GameState.get_attack_power()
+	var stats: Dictionary = GameState.get_stats()
 	var hit_any := false
 	for e in enemies_root.get_children():
 		if not (e is Enemy): continue
@@ -420,8 +428,7 @@ func _on_player_attack(aim_angle: float, pos: Vector2) -> void:
 		var ang: float = to_enemy.angle()
 		var diff: float = wrapf(ang - facing_angle, -PI, PI)
 		if abs(diff) > HALF_ARC: continue
-		enemy.take_damage(dmg, pos)
-		_spawn_damage_number(enemy.global_position, dmg)
+		_apply_hit(enemy, enemy.global_position, stats, pos)
 		hit_any = true
 	# Boss takes the same cone hit.
 	if boss != null and is_instance_valid(boss) and not boss._dead:
@@ -430,8 +437,7 @@ func _on_player_attack(aim_angle: float, pos: Vector2) -> void:
 			var bang: float = to_boss.angle()
 			var bdiff: float = wrapf(bang - facing_angle, -PI, PI)
 			if abs(bdiff) <= HALF_ARC:
-				boss.take_damage(dmg, pos)
-				_spawn_damage_number(boss.global_position + Vector2(0, -20), dmg)
+				_apply_hit(boss, boss.global_position + Vector2(0, -20), stats, pos)
 				hit_any = true
 	# A connected hit gives a tiny camera kick + brief hitstop so the swing
 	# has weight.
@@ -453,15 +459,23 @@ func _hitstop(duration: float = 0.06) -> void:
 	Engine.time_scale = 1.0
 
 # Floating damage number that rises and fades.
-func _spawn_damage_number(at: Vector2, amount: int) -> void:
+## Rolls one hit (crit / post-roll bonus) and shows its number.
+func _apply_hit(target: Node, label_at: Vector2, stats: Dictionary, from_pos: Vector2) -> void:
+	var hit := CombatMath.roll_hit(stats, _rng, player.since_roll)
+	target.take_damage(hit.amount, from_pos)
+	_spawn_damage_number(label_at, hit.amount, hit.crit)
+
+func _spawn_damage_number(at: Vector2, amount: int, crit: bool = false) -> void:
 	var lbl := Label.new()
-	lbl.text = str(amount)
+	lbl.text = ("%d!" % amount) if crit else str(amount)
 	lbl.position = at + Vector2(randf_range(-8, 8), -34)
 	lbl.z_index = 50
 	lbl.add_theme_color_override("font_color", Color(1.0, 0.95, 0.72))
 	lbl.add_theme_color_override("font_outline_color", Color(0.1, 0.05, 0.05))
 	lbl.add_theme_constant_override("outline_size", 4)
-	lbl.add_theme_font_size_override("font_size", 18)
+	lbl.add_theme_font_size_override("font_size", 24 if crit else 18)
+	if crit:
+		lbl.add_theme_color_override("font_color", Color(1.0, 0.62, 0.3))
 	add_child(lbl)
 	var tw := create_tween()
 	tw.tween_property(lbl, "position:y", lbl.position.y - 28, 0.5).set_ease(Tween.EASE_OUT)

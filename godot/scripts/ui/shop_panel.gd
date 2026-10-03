@@ -7,12 +7,6 @@ extends Control
 @onready var sell_list: VBoxContainer = $Panel/VBox/Cols/SellCol/Scroll/List
 @onready var close_btn: Button = $Panel/VBox/Header/Close
 
-const QUALITY_COLOR := {
-	"broken": Color(0.55, 0.52, 0.46), "common": Color(0.88, 0.84, 0.74),
-	"rare": Color(0.45, 0.60, 0.84), "corrupted": Color(0.61, 0.34, 0.65),
-	"relic": Color(0.85, 0.71, 0.38), "mythic": Color(0.95, 0.83, 0.45)
-}
-
 var _stock: Array = []
 
 func _ready() -> void:
@@ -67,8 +61,8 @@ func _make_row(item: Dictionary, is_buy: bool) -> Control:
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info.add_theme_constant_override("separation", 1)
 	var name_lbl := Label.new()
-	name_lbl.text = item.name
-	name_lbl.add_theme_color_override("font_color", QUALITY_COLOR.get(item.quality, Color.WHITE))
+	name_lbl.text = UiPalette.item_title(item)
+	name_lbl.add_theme_color_override("font_color", UiPalette.quality_color(item))
 	name_lbl.add_theme_font_size_override("font_size", 13)
 	info.add_child(name_lbl)
 	var sub := Label.new()

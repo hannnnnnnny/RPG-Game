@@ -15,7 +15,7 @@ const BUILDINGS := [
 	Rect2(520, 90, 240, 150),    # 杂货铺
 	Rect2(880, 130, 280, 180),   # 民居
 	Rect2(150, 520, 260, 160),   # 民居
-	Rect2(900, 520, 260, 170)    # 仓库
+	Rect2(900, 520, 260, 170)    # 铁匠铺（老锤）
 ]
 # Central plaza (wooden boards).
 const PLAZA := Rect2(470, 350, 420, 230)
@@ -110,6 +110,13 @@ func _spawn_npcs() -> void:
 				"你是从矿里出来的？那下面……还有活人吗？"]
 		}
 	]
+	defs.push_back({
+		"kind": "townsfolk", "name": "铁匠·老锤", "pos": Vector2(1130, 716),
+		"robe": "brown", "head": "plain", "wander": false,
+		"lines": ["砧子在那儿。强化不会炸，我手稳。重铸嘛……一次只动一条纹路，动多了铁会记仇。",
+			"用不上的破烂拿来拆了，拆出来的料比卖给铜婶值钱。",
+			"锁一条词条要稀有材料。矿里那些黑东西身上偶尔掉。"]
+	})
 	# Wandering crowd — mixed hoods and hairstyles so nobody is bald.
 	var crowd := [
 		{"name": "卖灯油的老汉", "pos": Vector2(560, 410), "robe": "brown", "head": "plain",
@@ -192,6 +199,9 @@ func _spawn_props() -> void:
 	# Interactive centerpiece: a fountain in the plaza.
 	_make_prop(PropScene, "fountain", Vector2(680, 430), "镇心喷泉", false,
 		["泉水从石口里淌出来，居然是清的。镇民轮班守着它，像守着最后一盏灯。"])
+	# Blacksmith's anvil in front of 老锤's forge — opens the ForgePanel.
+	_make_prop(PropScene, "anvil", Vector2(1080, 716), "铁砧", false, [])
+	_add_forge_glow(Vector2(1060, 708))
 	# Market stalls flanking the shop.
 	_make_prop(PropScene, "stall", Vector2(470, 300), "菜摊", false,
 		["半篮萎了的菜，半篮腌货。摊主说：「能吃就别挑。」"])
@@ -211,6 +221,16 @@ func _spawn_props() -> void:
 	]
 	for dd in decor:
 		_make_prop(PropScene, dd[0], dd[1], "", true, [])
+
+func _add_forge_glow(pos: Vector2) -> void:
+	var glow := PointLight2D.new()
+	glow.texture = LIGHT_TEX
+	glow.color = Color(1.0, 0.55, 0.25)
+	glow.energy = 0.9
+	glow.texture_scale = 1.4
+	glow.global_position = pos
+	add_child(glow)
+	_pulse_light(glow)
 
 func _make_prop(scene: PackedScene, kind: String, pos: Vector2, label: String, deco: bool, lines: Array) -> void:
 	var p: TownProp = scene.instantiate()

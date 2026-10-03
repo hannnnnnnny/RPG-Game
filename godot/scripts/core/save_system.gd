@@ -3,6 +3,9 @@ extends Node
 
 const SAVE_PATH := "user://tides_of_khah_v1.cfg"
 
+# Tests point this elsewhere so they never overwrite the real save.
+var save_path: String = SAVE_PATH
+
 func save() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("meta", "version", 1)
@@ -12,14 +15,15 @@ func save() -> void:
 	cfg.set_value("game", "combat", GameState.combat)
 	cfg.set_value("game", "inventory", GameState.inventory)
 	cfg.set_value("game", "equipped", GameState.equipped)
+	cfg.set_value("game", "materials", GameState.materials)
 	cfg.set_value("game", "log", GameState.log)
-	var err := cfg.save(SAVE_PATH)
+	var err := cfg.save(save_path)
 	if err != OK:
 		push_error("Save failed: %s" % err)
 
 func load_save() -> bool:
 	var cfg := ConfigFile.new()
-	var err := cfg.load(SAVE_PATH)
+	var err := cfg.load(save_path)
 	if err != OK:
 		return false
 	GameState.profile = cfg.get_value("game", "profile", {})
@@ -27,17 +31,19 @@ func load_save() -> bool:
 	GameState.combat = cfg.get_value("game", "combat", Types.make_default_combat())
 	GameState.inventory = cfg.get_value("game", "inventory", [])
 	GameState.equipped = cfg.get_value("game", "equipped", {})
+	GameState.materials = cfg.get_value("game", "materials", {})
 	GameState.log = cfg.get_value("game", "log", [])
 	GameState.emit_signal("profile_changed", GameState.profile)
 	GameState.emit_signal("world_state_changed", "*", null)
 	GameState.emit_signal("combat_changed", GameState.combat)
 	GameState.emit_signal("inventory_changed", GameState.inventory)
-	GameState.emit_signal("equipped_changed", GameState.equipped)
+	GameState.emit_equipment_changed()
+	GameState.emit_signal("materials_changed", GameState.materials)
 	return true
 
 func has_save() -> bool:
-	return FileAccess.file_exists(SAVE_PATH)
+	return FileAccess.file_exists(save_path)
 
 func delete_save() -> void:
 	if has_save():
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH))
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(save_path))

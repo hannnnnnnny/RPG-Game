@@ -3,7 +3,7 @@
 class_name TownProp
 extends Area2D
 
-@export_enum("door_store", "notice", "well", "crate", "sign", "stall", "fountain", "lantern_post", "barrel", "planter", "fence") var kind: String = "sign"
+@export_enum("door_store", "notice", "well", "crate", "sign", "stall", "fountain", "lantern_post", "barrel", "planter", "fence", "anvil") var kind: String = "sign"
 @export var label_text: String = ""
 @export var lines: PackedStringArray = []
 @export var decorative: bool = false  # pure scenery — not in the interactable group
@@ -20,6 +20,9 @@ func interact() -> void:
 	match kind:
 		"door_store":
 			get_tree().change_scene_to_file("res://scenes/world/StoreInterior.tscn")
+		"anvil":
+			# Decoupled: whichever scene hosts a ForgePanel opens it.
+			get_tree().call_group("forge_panel", "open")
 		_:
 			var text := lines[_idx % lines.size()] if lines.size() > 0 else "……"
 			_idx += 1
@@ -34,6 +37,16 @@ func _draw() -> void:
 	var f := func(x: float, y: float, w: float, h: float, c: Color) -> void:
 		draw_rect(Rect2(x * sc, y * sc, w * sc, h * sc), c, true)
 	match kind:
+		"anvil":
+			# Tree-stump anvil beside a glowing coal forge.
+			f.call(-22, -14, 12, 14, Color8(52, 44, 44))    # forge hearth
+			f.call(-20, -12, 8, 5, Color8(236, 120, 48))    # hot coals
+			f.call(-19, -11, 4, 2, Color8(255, 196, 96))
+			f.call(-2, -6, 16, 12, Color8(84, 58, 36))      # stump
+			f.call(-2, -6, 16, 2, Color8(120, 86, 54))
+			f.call(-6, -14, 22, 8, Color8(58, 60, 68))      # anvil body
+			f.call(-10, -14, 6, 4, Color8(58, 60, 68))      # horn
+			f.call(-6, -14, 22, 2, Color8(128, 132, 142))   # worn top face
 		"door_store":
 			# Lit doorway in the shop wall.
 			f.call(-12, -34, 24, 34, Color8(40, 28, 20))

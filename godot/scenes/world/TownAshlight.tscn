@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/town.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/actors/Player.tscn" id="2"]
@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/EventLog.tscn" id="7"]
 [ext_resource type="Shader" path="res://assets/shaders/dark_atmosphere.gdshader" id="8"]
 [ext_resource type="Script" path="res://scripts/ui/post_process.gd" id="9"]
+[ext_resource type="PackedScene" path="res://scenes/ui/ForgePanel.tscn" id="10"]
 
 [sub_resource type="ShaderMaterial" id="PostMat"]
 shader = ExtResource("8")
@@ -71,3 +72,5 @@ theme_override_colors/font_color = Color(0.62, 0.58, 0.5, 1)
 theme_override_font_sizes/font_size = 12
 
 [node name="Dialogue" parent="UILayer" instance=ExtResource("4")]
+
+[node name="ForgePanel" parent="UILayer" instance=ExtResource("10")]

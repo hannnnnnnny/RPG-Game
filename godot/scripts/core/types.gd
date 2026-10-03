@@ -27,6 +27,13 @@ const QUALITY_CORRUPTED := "corrupted"
 const QUALITY_RELIC := "relic"
 const QUALITY_MYTHIC := "mythic"
 
+const AFFIX_ATTACK := "attack"
+const AFFIX_DEFENSE := "defense"
+const AFFIX_MOBILITY := "mobility"
+const AFFIX_FORBIDDEN := "forbidden"
+const AFFIX_VESSEL := "vessel"
+const AFFIX_ECONOMY := "economy"
+
 const TONE_WHISPER := "whisper"
 const TONE_WARNING := "warning"
 const TONE_MEMORY := "memory"

@@ -6,6 +6,7 @@ signal world_state_changed(path: String, value: Variant)
 signal combat_changed(combat: Dictionary)
 signal inventory_changed(inventory: Array)
 signal equipped_changed(equipped: Dictionary)
+signal stats_changed(stats: Dictionary)
 signal dialogue_opened(speaker: String, text: String, tone: String)
 signal dialogue_closed()
 signal choice_opened(choice: Dictionary)
@@ -13,12 +14,17 @@ signal choice_closed()
 signal vision_opened(image_path: String, caption: String)
 signal vision_closed()
 signal log_appended(entry: String)
+signal materials_changed(materials: Dictionary)
+## A meter crossed into a new named tier (MindState). tier = the new tier dict.
+signal mind_tier_changed(meter: String, tier: Dictionary)
 
 var profile: Dictionary = {}
 var world_state: Dictionary = {}
 var combat: Dictionary = {}
 var inventory: Array = []
 var equipped: Dictionary = {}
+# Crafting materials, material id -> count (ids in Forge.MATERIAL_NAMES).
+var materials: Dictionary = {}
 var dialogue: Dictionary = {}
 var active_choice: Dictionary = {}
 var vision: Dictionary = {}
@@ -70,6 +76,7 @@ func _reset_to_defaults() -> void:
 	combat = Types.make_default_combat()
 	inventory = []
 	equipped = {}
+	materials = {}
 	dialogue = {}
 	active_choice = {}
 	vision = {}
@@ -128,7 +135,7 @@ func equip_item(item_id: String) -> void:
 	for item in inventory:
 		if item.id == item_id:
 			equipped[item.slot] = item.id
-			emit_signal("equipped_changed", equipped)
+			emit_equipment_changed()
 			_log("装备:%s" % item.name)
 			_schedule_save()
 			return
@@ -138,6 +145,46 @@ func add_gold(amount: int) -> void:
 	emit_signal("world_state_changed", "gold", world_state.gold)
 	_log("获得 %d 金币。" % amount)
 	_schedule_save()
+
+## Kill reward: base gold for the source/tier, boosted by 金币掉落.
+func add_kill_gold(source: String) -> void:
+	var base := LootGenerator.gold_for_kill(source, int(world_state.world_tier))
+	add_gold(CombatMath.apply_gold_find(base, get_stats()))
+
+func add_materials(gained: Dictionary) -> void:
+	for id in gained:
+		materials[id] = int(materials.get(id, 0)) + int(gained[id])
+	emit_signal("materials_changed", materials)
+	_schedule_save()
+
+func has_materials(cost: Dictionary) -> bool:
+	for id in cost:
+		if int(materials.get(id, 0)) < int(cost[id]):
+			return false
+	return true
+
+## Deducts materials only if every one is affordable; returns success.
+func spend_materials(cost: Dictionary) -> bool:
+	if not has_materials(cost):
+		return false
+	for id in cost:
+		materials[id] = int(materials[id]) - int(cost[id])
+	emit_signal("materials_changed", materials)
+	_schedule_save()
+	return true
+
+## Applies the death penalty and returns the gold lost.
+func on_player_down() -> int:
+	var lost := CombatMath.death_gold_loss(int(world_state.gold))
+	if lost > 0:
+		spend_gold(lost)
+	_log("倒下了。遗失 %d 金币。" % lost)
+	set_dialogue({
+		"speaker": "克哈低语",
+		"text": "死亡在这里没有耐心。%s 枚金币留在了黑暗里——站起来，再走一次。" % lost,
+		"tone": Types.TONE_WHISPER
+	})
+	return lost
 
 # Spend gold if affordable; returns success.
 func spend_gold(amount: int) -> bool:
@@ -156,28 +203,92 @@ func remove_item(item_id: String) -> Dictionary:
 			inventory.remove_at(i)
 			if equipped.get(item.slot, "") == item_id:
 				equipped.erase(item.slot)
-				emit_signal("equipped_changed", equipped)
+				emit_equipment_changed()
 			emit_signal("inventory_changed", inventory)
 			_schedule_save()
 			return item
 	return {}
 
-# 玩家近战攻击力：空手基础 8，装备主手武器时加上其 attack 类词条之和。
-# 例：空手 8 → 打 20 血怪需 3 下，不秒杀。装好武器后更高。
-const BASE_ATTACK := 8
+# ============ Forge actions (rules live in Forge; this pays + stores) ============
+
+var _forge_rng := RandomNumberGenerator.new()
+
+func find_item(item_id: String) -> Dictionary:
+	for item in inventory:
+		if item.id == item_id:
+			return item
+	return {}
+
+func _replace_item(updated: Dictionary) -> void:
+	for i in range(inventory.size()):
+		if inventory[i].id == updated.id:
+			inventory[i] = updated
+			break
+	emit_signal("inventory_changed", inventory)
+	if equipped.get(updated.slot, "") == updated.id:
+		emit_equipment_changed()
+	_schedule_save()
+
+func forge_upgrade(item_id: String) -> bool:
+	var item := find_item(item_id)
+	if item.is_empty() or not Forge.can_upgrade(item):
+		return false
+	if not spend_gold(Forge.upgrade_cost(item)):
+		return false
+	var out := Forge.upgraded(item)
+	_replace_item(out)
+	_log("强化 %s → +%d" % [item.name, out.upgrade_level])
+	return true
+
+## Pays for a reroll and returns the offered affix ({} if not allowed).
+## Must be followed by forge_resolve_reroll to keep or take the offer.
+func forge_reroll_offer(item_id: String, affix_index: int) -> Dictionary:
+	var item := find_item(item_id)
+	if item.is_empty() or not Forge.can_reroll(item, affix_index):
+		return {}
+	if not spend_gold(Forge.reroll_cost(item)):
+		return {}
+	return Forge.reroll_offer(item, _forge_rng)
+
+func forge_resolve_reroll(item_id: String, affix_index: int, offer: Dictionary, accept: bool) -> void:
+	var item := find_item(item_id)
+	if item.is_empty():
+		return
+	_replace_item(Forge.resolve_reroll(item, affix_index, offer, accept))
+	_log("重铸 %s：%s" % [item.name, "接受新词条" if accept else "保留旧词条"])
+
+func forge_lock(item_id: String, affix_index: int) -> bool:
+	var item := find_item(item_id)
+	if item.is_empty() or not spend_materials(Forge.LOCK_MATERIAL):
+		return false
+	_replace_item(Forge.locked(item, affix_index))
+	_log("锁定 %s 的一条词条。" % item.name)
+	return true
+
+## Breaks an item into materials; returns what was gained.
+func salvage_item(item_id: String) -> Dictionary:
+	var item := remove_item(item_id)
+	if item.is_empty():
+		return {}
+	var gained := Forge.salvage_yield(item)
+	add_materials(gained)
+	_log("分解 %s。" % item.name)
+	return gained
+
+# Kept as an alias of StatCalc.BASE_ATTACK for older callers.
+const BASE_ATTACK := StatCalc.BASE_ATTACK
+
+## Combat stats derived from the whole loadout (see StatCalc).
+func get_stats() -> Dictionary:
+	return StatCalc.derive(inventory, equipped)
+
+## Equipment and the stats derived from it always change together.
+func emit_equipment_changed() -> void:
+	emit_signal("equipped_changed", equipped)
+	emit_signal("stats_changed", get_stats())
 
 func get_attack_power() -> int:
-	var weapon_id: String = equipped.get(Types.SLOT_MAIN_HAND, "")
-	if weapon_id == "":
-		return BASE_ATTACK
-	for item in inventory:
-		if item.id == weapon_id:
-			var bonus := 0
-			for affix in item.affixes:
-				if affix.category == Types.AFFIX_ATTACK:
-					bonus += int(affix.value)
-			return BASE_ATTACK + bonus
-	return BASE_ATTACK
+	return int(get_stats().attack)
 
 func request_state_change(request: Dictionary) -> bool:
 	var decision: Dictionary = AidlcRules.approve_state_change(request, world_state)
@@ -190,10 +301,42 @@ func request_state_change(request: Dictionary) -> bool:
 		return false
 
 	for effect in request.effects:
-		_set_path(effect.path, effect.value)
+		_apply_effect(effect)
 	_log("世界状态变更：%s" % request.type)
 	_schedule_save()
 	return true
+
+# 0–100 meters that accept relative {"delta": n} effects.
+const METERS := ["sanity", "corruption", "parasite_load"]
+
+## An effect is {"path", "value"} (absolute) or {"path", "delta"} (relative,
+## meters only). Deltas are clamped, and sanity losses are softened by 理智稳定.
+func _apply_effect(effect: Dictionary) -> void:
+	if effect.has("delta"):
+		change_meter(effect.path, int(effect.delta))
+	else:
+		_set_path(effect.path, effect.value)
+
+func change_meter(meter: String, delta: int) -> void:
+	if not meter in METERS:
+		push_warning("Not a meter: %s" % meter)
+		return
+	if meter == "sanity":
+		delta = MindState.soften_loss(delta, int(get_stats().sanity_guard))
+	var before := int(world_state.get(meter, 0))
+	_set_path(meter, MindState.clamp_meter(before + delta))
+	_check_tier_crossing(meter, before, int(world_state[meter]))
+
+func _check_tier_crossing(meter: String, before: int, after: int) -> void:
+	var tier_of := func(v: int) -> Dictionary:
+		return MindState.sanity_tier(v) if meter == "sanity" else MindState.corruption_tier(v)
+	if meter == "parasite_load" or tier_of.call(before).id == tier_of.call(after).id:
+		return
+	var tier: Dictionary = tier_of.call(after)
+	var label := "理智" if meter == "sanity" else "污染"
+	var dir := "跌入" if (meter == "sanity") == (after < before) else "回到"
+	_log("%s%s「%s」。%s" % [label, dir, tier.name, tier.get("hint", "")])
+	emit_signal("mind_tier_changed", meter, tier)
 
 func _set_path(path: String, value: Variant) -> void:
 	if path.begins_with("flags."):
@@ -214,7 +357,8 @@ func reset_run() -> void:
 	emit_signal("world_state_changed", "*", null)
 	emit_signal("combat_changed", combat)
 	emit_signal("inventory_changed", inventory)
-	emit_signal("equipped_changed", equipped)
+	emit_equipment_changed()
+	emit_signal("materials_changed", materials)
 
 func _log(entry: String) -> void:
 	log.push_front(entry)

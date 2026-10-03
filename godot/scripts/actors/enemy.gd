@@ -115,7 +115,7 @@ func _die() -> void:
 	_dying = true
 	set_physics_process(false)
 	var world_tier: int = GameState.world_state.world_tier
-	GameState.add_gold(LootGenerator.gold_for_kill("enemy", world_tier))
+	GameState.add_kill_gold("enemy")
 	if randf() > 0.36:
 		GameState.add_item(LootGenerator.generate_loot("enemy", world_tier))
 	# Quick death pop before removal.

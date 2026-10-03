@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>潮蚀之环 · Tides of Khah</title>
+  <style>
+    :root { --bg: #08050f; --ink: #fde9c4; --gold: #fad65c; --wood: #c46e2a; --err: #e46a5a; }
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); overflow: hidden; }
+    body { font-family: "Zpix", "Microsoft YaHei", sans-serif; }
+    @font-face { font-family: "Zpix"; src: url("assets/fonts/zpix.ttf"); }
+    #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none; image-rendering: pixelated; }
+    #veil { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 16px; text-align: center; background: var(--bg); transition: opacity .6s; }
+    #veil h1 { margin: 0; font-size: clamp(40px, 10vw, 72px); color: var(--gold); text-shadow: 4px 4px 0 #1a0820; letter-spacing: 4px; font-weight: normal; }
+    #veil p { margin: 0; font-size: 16px; }
+    .bar { width: min(320px, 80vw); height: 14px; border: 3px solid var(--wood); background: #2a1608; }
+    .bar i { display: block; height: 100%; width: 30%; background: var(--gold); animation: slide 1.2s ease-in-out infinite alternate; }
+    @keyframes slide { from { margin-left: 0; } to { margin-left: 70%; } }
+    #veil.error .bar { display: none; }
+    #veil.error #status { color: var(--err); }
+    #veil.gone { opacity: 0; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <canvas id="game" tabindex="0"></canvas>
+  <div id="veil" role="status" aria-live="polite">
+    <h1>潮蚀之环</h1>
+    <p id="status">潮水正在涨起……（首次加载约 30 MB）</p>
+    <div class="bar"><i></i></div>
+  </div>
+  <script type="module">
+    const veil = document.getElementById("veil");
+    const status = document.getElementById("status");
+    const fail = (msg) => { veil.classList.add("error"); status.textContent = msg; };
+    if (!document.createElement("canvas").getContext("webgl2")) {
+      fail("这个浏览器不支持 WebGL2，无法运行游戏。请换用新版 Chrome / Edge / Firefox。");
+    } else {
+      // Bevy's wasm `main` never returns (it hands control to the browser's
+      // frame loop), so the veil lifts once the first frame has drawn.
+      const lift = () => { veil.classList.add("gone"); document.getElementById("game").focus(); };
+      new MutationObserver((_, obs) => { obs.disconnect(); setTimeout(lift, 400); })
+        .observe(document.getElementById("game"), { attributes: true, attributeFilter: ["width", "height", "style"] });
+      import("./tides_game.js")
+        .then((m) => m.default())
+        .catch((e) => {
+          // winit uses an exception for control flow on the web; ignore it.
+          if (!String(e).includes("Using exceptions for control flow")) fail("加载失败：" + e);
+        });
+    }
+  </script>
+</body>
+</html>

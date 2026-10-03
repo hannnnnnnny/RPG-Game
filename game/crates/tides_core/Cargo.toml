@@ -1,0 +1,14 @@
+[package]
+name = "tides_core"
+description = "《潮蚀之环》engine-free game rules: stats, combat, forge, mind, loot, world state."
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+fastrand = "2.5.0"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
