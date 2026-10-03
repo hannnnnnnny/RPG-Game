@@ -4,6 +4,7 @@
 use bevy::prelude::*;
 use tides_core::item::{Quality, Slot};
 use tides_core::mind::{CorruptionTier, SanityTier, vessel_stage_name};
+use tides_core::shop::Supply;
 
 use crate::area::AreaTitle;
 use crate::combat::Vitals;
@@ -41,10 +42,17 @@ enum BarFill {
 struct ToolSlot(Slot);
 #[derive(Component)]
 struct ToolGem(Slot);
+/// A supply cell's icon (dimmed when none are left) and its count.
+#[derive(Component)]
+struct SupplyIcon(Supply);
+#[derive(Component)]
+struct SupplyCount(Supply);
+
+const SUPPLY_KEYS: [(Supply, &str); 2] = [(Supply::HealingDraught, "Q"), (Supply::CalmingTea, "R")];
 
 pub fn plugin(app: &mut App) {
     app.add_systems(Startup, (spawn_info, spawn_bars, spawn_toolbar))
-        .add_systems(Update, (update_readouts, update_bars, update_toolbar));
+        .add_systems(Update, (update_readouts, update_bars, update_toolbar, update_supplies));
 }
 
 fn anchored(right: f32, top: Option<f32>, bottom: Option<f32>) -> Node {
@@ -109,7 +117,7 @@ fn spawn_toolbar(mut commands: Commands, kit: Res<UiKit>, fonts: Res<Fonts>) {
                 position_type: PositionType::Absolute,
                 bottom: px(10),
                 left: percent(50),
-                margin: UiRect::left(px(-201)),
+                margin: UiRect::left(px(-270)),
                 padding: px(15).all(),
                 column_gap: px(4),
                 ..default()
@@ -130,6 +138,50 @@ fn spawn_toolbar(mut commands: Commands, kit: Res<UiKit>, fonts: Res<Fonts>) {
             ))
             .id();
         commands.entity(strip).add_child(cell);
+    }
+    commands.entity(strip).with_children(|p| {
+        p.spawn(Node { width: px(10), ..default() });
+        for (supply, key) in SUPPLY_KEYS {
+            supply_cell(p, &kit, &fonts.body, supply, key);
+        }
+    });
+}
+
+fn supply_cell(p: &mut ChildSpawnerCommands, kit: &UiKit, font: &Handle<Font>, supply: Supply, key: &str) {
+    let corner = |left: bool| Node {
+        position_type: PositionType::Absolute,
+        left: if left { px(5) } else { Val::Auto },
+        right: if left { Val::Auto } else { px(6) },
+        top: if left { px(3) } else { Val::Auto },
+        bottom: if left { Val::Auto } else { px(2) },
+        ..default()
+    };
+    p.spawn((Node { width: px(58), height: px(58), align_items: AlignItems::Center, justify_content: JustifyContent::Center, ..default() },))
+        .with_children(|p| {
+            p.spawn(kit.backdrop(Frame::Slot));
+            p.spawn((SupplyIcon(supply), ImageNode::default(), Node { width: px(40), height: px(40), ..default() }));
+            p.spawn((Text::new(key), text_font(font, 11.0), TextColor(INK_SOFT), corner(true)));
+            p.spawn((SupplyCount(supply), Text::new("0"), text_font(font, 14.0), TextColor(INK), corner(false)));
+        });
+}
+
+fn update_supplies(
+    run: Res<RunRes>,
+    mut icons: ResMut<ItemIcons>,
+    mut images: ResMut<Assets<Image>>,
+    mut imgs: Query<(&SupplyIcon, &mut ImageNode)>,
+    mut counts: Query<(&SupplyCount, &mut Text)>,
+) {
+    if !run.is_changed() {
+        return;
+    }
+    for (icon, mut img) in &mut imgs {
+        img.image = icons.supply(icon.0, &mut images);
+        // Empty bottles show as a faded outline, like Stardew's greyed tools.
+        img.color = if run.supply_count(icon.0) > 0 { Color::WHITE } else { Color::srgba(1.0, 1.0, 1.0, 0.3) };
+    }
+    for (c, mut text) in &mut counts {
+        text.0 = run.supply_count(c.0).to_string();
     }
 }
 

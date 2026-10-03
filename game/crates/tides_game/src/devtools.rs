@@ -8,6 +8,7 @@ use bevy::prelude::*;
 use bevy::render::view::screenshot::{Screenshot, save_to_disk};
 use tides_core::areas::Mine;
 use tides_core::forge::Material;
+use tides_core::shop::Supply;
 use tides_core::loot::{self, DropSource};
 use tides_core::story::mine::{self, Spot};
 
@@ -63,6 +64,7 @@ fn stage(
         let _ = run.equip(first);
         run.world.gold = 1284;
         run.materials.insert(Material::Rare, 2);
+        run.supplies.insert(Supply::HealingDraught, 3);
         *modal = match name.as_str() {
             "menu" => Modal::Menu(MenuTab::Bag),
             "journal" => Modal::Menu(MenuTab::Journal),
