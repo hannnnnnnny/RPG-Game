@@ -10,3 +10,4 @@
 *.toml text eol=lf
 Cargo.lock text eol=lf
 *.ron text eol=lf
+*.wgsl text eol=lf
