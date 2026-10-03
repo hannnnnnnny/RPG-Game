@@ -1,14 +1,13 @@
 //! Where the save lives and when it's written. The format is tides_core's
-//! versioned JSON; this module only moves bytes. The file goes to
-//! `$TIDES_SAVE_DIR`, else `%APPDATA%/TidesOfKhah` (Windows) or
-//! `$XDG_DATA_HOME|~/.local/share/tides_of_khah`. Writes are atomic
-//! (temp file + rename) so a crash mid-save never leaves half a file.
+//! versioned JSON; this module only moves the text.
+//!
+//! Native: a file in `$TIDES_SAVE_DIR`, else `%APPDATA%/TidesOfKhah`
+//! (Windows) or `$XDG_DATA_HOME|~/.local/share/tides_of_khah`. Writes are
+//! atomic (temp file + rename) so a crash mid-save never leaves half a file.
+//! Web: one `localStorage` key.
 //!
 //! Autosave: on entering an area, when a window (forge, shop, choice…)
 //! closes, and every `AUTOSAVE_SECS`. Staged dev runs never save.
-
-use std::path::{Path, PathBuf};
-use std::{fs, io};
 
 use bevy::prelude::*;
 use tides_core::run::Run;
@@ -18,76 +17,132 @@ use crate::area::Area;
 use crate::beats::Modal;
 use crate::run_state::RunRes;
 
-const FILE: &str = "save.json";
 const AUTOSAVE_SECS: f32 = 30.0;
 
 #[derive(Debug)]
 pub enum SaveError {
-    Io(io::Error),
+    #[cfg(not(target_arch = "wasm32"))]
+    Io(std::io::Error),
+    /// The browser refused (storage disabled, quota, private mode…).
+    #[cfg(target_arch = "wasm32")]
+    Web(&'static str),
     Load(LoadError),
 }
 
 impl std::fmt::Display for SaveError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
+            #[cfg(not(target_arch = "wasm32"))]
             SaveError::Io(e) => write!(f, "读写失败：{e}"),
+            #[cfg(target_arch = "wasm32")]
+            SaveError::Web(why) => write!(f, "浏览器存储不可用：{why}"),
             SaveError::Load(LoadError::Corrupt(_)) => write!(f, "内容损坏"),
             SaveError::Load(LoadError::TooNew(v)) => write!(f, "来自更新的版本 v{v}"),
         }
     }
 }
 
-impl From<io::Error> for SaveError {
-    fn from(e: io::Error) -> Self {
-        SaveError::Io(e)
-    }
-}
-
 #[derive(Resource, Clone, Debug)]
 pub struct SaveSlot {
-    dir: PathBuf,
+    store: store::Store,
 }
 
 impl SaveSlot {
-    pub fn in_dir(dir: impl Into<PathBuf>) -> Self {
-        Self { dir: dir.into() }
-    }
-
-    /// The platform's per-user data directory (see module docs).
     pub fn locate() -> Self {
-        let env = |k: &str| std::env::var_os(k).map(PathBuf::from);
-        let dir = env("TIDES_SAVE_DIR")
-            .or_else(|| env("APPDATA").map(|d| d.join("TidesOfKhah")))
-            .or_else(|| env("XDG_DATA_HOME").map(|d| d.join("tides_of_khah")))
-            .or_else(|| env("HOME").map(|d| d.join(".local/share/tides_of_khah")))
-            .unwrap_or_else(|| PathBuf::from("."));
-        Self::in_dir(dir)
-    }
-
-    fn path(&self) -> PathBuf {
-        self.dir.join(FILE)
+        Self { store: store::Store::locate() }
     }
 
     /// `Ok(None)` when there is simply no save yet.
     pub fn read(&self) -> Result<Option<Run>, SaveError> {
-        match fs::read_to_string(self.path()) {
-            Ok(text) => save::decode(&text).map(Some).map_err(SaveError::Load),
-            Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(None),
-            Err(e) => Err(e.into()),
+        match self.store.read_text()? {
+            Some(text) => save::decode(&text).map(Some).map_err(SaveError::Load),
+            None => Ok(None),
         }
     }
 
     pub fn write(&self, run: &Run) -> Result<(), SaveError> {
-        fs::create_dir_all(&self.dir)?;
-        let tmp = self.dir.join(format!("{FILE}.tmp"));
-        write_then_rename(&tmp, &self.path(), save::encode(run).as_bytes())?;
-        Ok(())
+        self.store.write_text(&save::encode(run))
     }
 }
 
-fn write_then_rename(tmp: &Path, dest: &Path, bytes: &[u8]) -> io::Result<()> {
-    fs::write(tmp, bytes)?;
-    fs::rename(tmp, dest)
+#[cfg(not(target_arch = "wasm32"))]
+mod store {
+    use std::path::PathBuf;
+    use std::{fs, io};
+
+    use super::SaveError;
+
+    const FILE: &str = "save.json";
+
+    #[derive(Clone, Debug)]
+    pub struct Store {
+        pub dir: PathBuf,
+    }
+
+    impl Store {
+        /// The platform's per-user data directory (see module docs).
+        pub fn locate() -> Self {
+            let env = |k: &str| std::env::var_os(k).map(PathBuf::from);
+            let dir = env("TIDES_SAVE_DIR")
+                .or_else(|| env("APPDATA").map(|d| d.join("TidesOfKhah")))
+                .or_else(|| env("XDG_DATA_HOME").map(|d| d.join("tides_of_khah")))
+                .or_else(|| env("HOME").map(|d| d.join(".local/share/tides_of_khah")))
+                .unwrap_or_else(|| PathBuf::from("."));
+            Self { dir }
+        }
+
+        pub fn path(&self) -> PathBuf {
+            self.dir.join(FILE)
+        }
+
+        pub fn read_text(&self) -> Result<Option<String>, SaveError> {
+            match fs::read_to_string(self.path()) {
+                Ok(text) => Ok(Some(text)),
+                Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(None),
+                Err(e) => Err(SaveError::Io(e)),
+            }
+        }
+
+        pub fn write_text(&self, text: &str) -> Result<(), SaveError> {
+            let tmp = self.dir.join(format!("{FILE}.tmp"));
+            fs::create_dir_all(&self.dir)
+                .and_then(|_| fs::write(&tmp, text))
+                .and_then(|_| fs::rename(&tmp, self.path()))
+                .map_err(SaveError::Io)
+        }
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+mod store {
+    use super::SaveError;
+
+    const KEY: &str = "tides_of_khah.save";
+
+    #[derive(Clone, Debug)]
+    pub struct Store;
+
+    fn local_storage() -> Result<web_sys::Storage, SaveError> {
+        web_sys::window()
+            .ok_or(SaveError::Web("没有 window"))?
+            .local_storage()
+            .map_err(|_| SaveError::Web("访问被拒绝"))?
+            .ok_or(SaveError::Web("localStorage 已关闭"))
+    }
+
+    impl Store {
+        pub fn locate() -> Self {
+            Store
+        }
+
+        pub fn read_text(&self) -> Result<Option<String>, SaveError> {
+            local_storage()?.get_item(KEY).map_err(|_| SaveError::Web("读取失败"))
+        }
+
+        pub fn write_text(&self, text: &str) -> Result<(), SaveError> {
+            local_storage()?.set_item(KEY, text).map_err(|_| SaveError::Web("写入失败（空间不足？）"))
+        }
+    }
 }
 
 /// Set while the world is a real playthrough (not the title, not a dev stage).
@@ -140,20 +195,22 @@ fn save_on_timer(time: Res<Time>, mut auto: ResMut<Autosave>, slot: Res<SaveSlot
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(target_arch = "wasm32")))]
 mod tests {
+    use std::fs;
+
     use super::*;
 
     fn temp_slot(name: &str) -> SaveSlot {
         let dir = std::env::temp_dir().join(format!("tides_test_{name}_{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
-        SaveSlot::in_dir(dir)
+        SaveSlot { store: store::Store { dir } }
     }
 
     #[test]
     fn missing_save_is_none_not_an_error() {
         let slot = temp_slot("missing");
-        assert!(!slot.path().is_file());
+        assert!(!slot.store.path().is_file());
         assert!(matches!(slot.read(), Ok(None)));
     }
 
@@ -164,18 +221,18 @@ mod tests {
         run.world.gold = 77;
         run.drain_events();
         slot.write(&run).unwrap();
-        assert!(slot.path().is_file());
+        assert!(slot.store.path().is_file());
         assert_eq!(slot.read().unwrap(), Some(run));
-        assert!(!slot.dir.join("save.json.tmp").exists());
-        fs::remove_dir_all(&slot.dir).unwrap();
+        assert!(!slot.store.dir.join("save.json.tmp").exists());
+        fs::remove_dir_all(&slot.store.dir).unwrap();
     }
 
     #[test]
     fn corrupt_save_is_reported() {
         let slot = temp_slot("corrupt");
-        fs::create_dir_all(&slot.dir).unwrap();
-        fs::write(slot.path(), "{ nope").unwrap();
+        fs::create_dir_all(&slot.store.dir).unwrap();
+        fs::write(slot.store.path(), "{ nope").unwrap();
         assert!(matches!(slot.read(), Err(SaveError::Load(LoadError::Corrupt(_)))));
-        fs::remove_dir_all(&slot.dir).unwrap();
+        fs::remove_dir_all(&slot.store.dir).unwrap();
     }
 }

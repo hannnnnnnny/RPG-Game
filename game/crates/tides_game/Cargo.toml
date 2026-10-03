@@ -12,3 +12,9 @@ workspace = true
 bevy = { version = "0.19.1", default-features = false, features = ["2d", "ui", "audio", "wav", "jpeg", "debug"] }
 fastrand = "2.5.0"
 tides_core = { path = "../tides_core" }
+
+# Web build: WebGL2 renderer, browser entropy for fastrand, localStorage saves.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+bevy = { version = "0.19.1", default-features = false, features = ["webgl2"] }
+fastrand = { version = "2.5.0", features = ["js"] }
+web-sys = { version = "0.3", features = ["Window", "Storage"] }
