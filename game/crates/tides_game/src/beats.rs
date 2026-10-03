@@ -33,6 +33,8 @@ pub enum Modal {
     Menu(MenuTab),
     /// 老锤's anvil.
     Forge,
+    /// 铜婶's general store.
+    Shop,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
