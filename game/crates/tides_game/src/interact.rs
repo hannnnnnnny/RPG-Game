@@ -3,7 +3,7 @@
 
 use bevy::prelude::*;
 use tides_core::story::mine::{self, Spot};
-use tides_core::story::town;
+use tides_core::story::{survivor, town};
 
 use crate::beats::{Modal, PlayBeat};
 use crate::coords::Z_OVERLAY;
@@ -25,6 +25,8 @@ pub enum Target {
     Forge,
     /// The general store's door.
     Shop,
+    /// 布林, the dwarf you saved.
+    Survivor,
 }
 
 #[derive(Component)]
@@ -74,6 +76,7 @@ fn run_target(run: &mut RunRes, it: &mut Interactable, modal: &mut Modal) -> Opt
         Target::MineSpot(s) => mine::interact(run, s),
         Target::Townsfolk(i) => town::talk(run, &town::NPCS[i], it.uses),
         Target::Sign(title, lines) => town::sign(title, lines, it.uses),
+        Target::Survivor => survivor::talk(run, it.uses),
         Target::Forge => {
             *modal = Modal::Forge;
             return None;
