@@ -23,6 +23,7 @@ mod lighting;
 mod lpc;
 mod menu;
 mod paint;
+mod persist;
 mod physics;
 mod player;
 mod props_art;
@@ -50,7 +51,7 @@ fn main() {
         )
         .insert_resource(ClearColor(Color::srgb(0.05, 0.04, 0.06)))
         // Engine-level services, then world/gameplay, then presentation.
-        .add_plugins((ui::plugin, run_state::plugin, pixelated::plugin, lpc::plugin, item_icons::plugin, devtools::plugin))
+        .add_plugins((ui::plugin, run_state::plugin, pixelated::plugin, lpc::plugin, item_icons::plugin, devtools::plugin, persist::plugin))
         .add_plugins((area::plugin, physics::plugin, lighting::plugin, camera::plugin))
         .add_plugins((player::plugin, enemy::plugin, boss::plugin, combat::plugin, spots::plugin, townsfolk::plugin, supplies::plugin))
         .add_plugins((beats::plugin, dialogue::plugin, modal::plugin, hud::plugin, interact::plugin, menu::plugin, forge_ui::plugin, shop_ui::plugin))
