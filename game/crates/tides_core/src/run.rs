@@ -37,6 +37,18 @@ pub enum ActionError {
     NotAllowed,
 }
 
+impl ActionError {
+    /// What the shopkeeper / smith says when an action is refused.
+    pub fn label(self) -> &'static str {
+        match self {
+            ActionError::NoSuchItem => "东西不见了。",
+            ActionError::NotEnoughGold => "金币不够。",
+            ActionError::NotEnoughMaterials => "材料不够。",
+            ActionError::NotAllowed => "这件做不了。",
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Run {
     pub profile: Profile,
@@ -230,7 +242,11 @@ impl Run {
         Ok(())
     }
 
+    /// Worn gear can't be broken down; take it off first.
     pub fn salvage(&mut self, id: ItemId) -> Result<Materials, ActionError> {
+        if self.equipped.values().any(|e| *e == id) {
+            return Err(ActionError::NotAllowed);
+        }
         let item = self.remove_item(id).ok_or(ActionError::NoSuchItem)?;
         let gained = forge::salvage_yield(&item);
         self.add_materials(&gained);
@@ -379,6 +395,22 @@ mod tests {
         run.salvage(ItemId(7)).unwrap();
         assert!(run.find_item(ItemId(7)).is_none());
         assert_eq!(run.materials[&Material::Rare], 1);
+    }
+
+    #[test]
+    fn equipped_gear_cannot_be_salvaged() {
+        let mut run = Run::new("t");
+        run.add_item(weapon(10));
+        run.equip(ItemId(7)).unwrap();
+        assert_eq!(run.salvage(ItemId(7)), Err(ActionError::NotAllowed));
+        assert!(run.find_item(ItemId(7)).is_some());
+    }
+
+    #[test]
+    fn action_errors_have_distinct_labels() {
+        let all = [ActionError::NoSuchItem, ActionError::NotEnoughGold, ActionError::NotEnoughMaterials, ActionError::NotAllowed];
+        let labels: std::collections::BTreeSet<_> = all.iter().map(|e| e.label()).collect();
+        assert_eq!(labels.len(), all.len());
     }
 
     #[test]
