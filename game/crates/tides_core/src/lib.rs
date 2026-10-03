@@ -8,6 +8,7 @@ pub mod stats;
 pub mod combat;
 pub mod loot;
 pub mod forge;
+pub mod shop;
 pub mod mind;
 pub mod world;
 pub mod aidlc;
