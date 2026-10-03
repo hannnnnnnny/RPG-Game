@@ -7,6 +7,7 @@
 use bevy::prelude::*;
 use bevy::render::view::screenshot::{Screenshot, save_to_disk};
 use tides_core::areas::Mine;
+use tides_core::forge::Material;
 use tides_core::loot::{self, DropSource};
 use tides_core::story::mine::{self, Spot};
 
@@ -52,7 +53,7 @@ fn stage(
     *done = true;
     let Ok(name) = std::env::var("TIDES_STAGE") else { return };
     queue.0.clear();
-    if name == "menu" || name == "journal" {
+    if matches!(name.as_str(), "menu" | "journal" | "forge") {
         let mut rng = fastrand::Rng::with_seed(7);
         for src in [DropSource::Elite, DropSource::Totem, DropSource::Enemy, DropSource::Enemy, DropSource::Elite] {
             let item = loot::generate(src, 1, &mut rng);
@@ -61,7 +62,12 @@ fn stage(
         let first = run.inventory[0].id;
         let _ = run.equip(first);
         run.world.gold = 1284;
-        *modal = Modal::Menu(if name == "menu" { MenuTab::Bag } else { MenuTab::Journal });
+        run.materials.insert(Material::Rare, 2);
+        *modal = match name.as_str() {
+            "menu" => Modal::Menu(MenuTab::Bag),
+            "journal" => Modal::Menu(MenuTab::Journal),
+            _ => Modal::Forge,
+        };
         return;
     }
     if name == "town" {
